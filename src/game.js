@@ -29,7 +29,6 @@ export class SoccerGameScene extends Phaser.Scene {
   preload() {
     this.load.image('pitch', '/assets/backgrounds/pitch.png');
     this.load.image('crowd', '/assets/backgrounds/crowd_stands.png');
-    this.load.image('goalposts', '/assets/sprites/goalposts.png');
     this.load.image('ad_board', '/assets/ui/ad_board.png');
     this.load.image('scoreboard', '/assets/ui/scoreboard.png');
     this.load.image('coach_portrait', '/assets/ui/coach_portrait.png');
@@ -95,8 +94,8 @@ export class SoccerGameScene extends Phaser.Scene {
     this.postsGroup.add(rightTopPost);
     this.postsGroup.add(rightBottomPost);
 
-    // 3. Goalposts Graphic Layer (sitting perfectly on top of the pitch)
-    this.add.image(width / 2, height / 2, 'goalposts');
+    // 3. Goalposts Graphic Layer is baked inside the pitch background!
+    // We don't overlay the double duplicate image.
 
     this.createPlayerAnimations();
 
