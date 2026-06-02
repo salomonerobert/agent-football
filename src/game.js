@@ -590,10 +590,23 @@ export class SoccerGameScene extends Phaser.Scene {
     this.captureReadyAt = this.time.now + 260;
     this.lastTouchTeam = teamNum;
 
+    // Kick direction comes from where the player is steering; if standing still,
+    // use the facing direction (flipX). The ball goes where you point it.
+    let kdx = dx;
+    let kdy = dy;
+    if (kdx === 0 && kdy === 0) {
+      kdx = player.flipX ? -1 : 1;
+      kdy = 0;
+    }
+    const klen = Math.hypot(kdx, kdy) || 1;
+    kdx /= klen;
+    kdy /= klen;
+
     const teammates = teamNum === 1 ? this.bluePlayers : this.redPlayers;
-    const passTarget = this.findTeammateInDirection(player, teammates, dx, dy);
+    const passTarget = this.findTeammateInDirection(player, teammates, kdx, kdy);
 
     if (passTarget) {
+      // A teammate lies along the aim — pass to them (low, drilled).
       const angleRad = Phaser.Math.Angle.Between(player.x, player.y, passTarget.x, passTarget.y);
       const passSpeed = 300 + 360 * power;
 
@@ -602,12 +615,11 @@ export class SoccerGameScene extends Phaser.Scene {
 
       this.showCoachShout(teamNum, power > 0.8 ? 'BRILLIANT PASS!' : 'NICE BALL!');
     } else {
-      const targetX = teamNum === 1 ? 1408 : 0;
-      const angleRad = Phaser.Math.Angle.Between(player.x, player.y, targetX, this.ball.y) + (Math.random() * 0.12 - 0.06);
+      // Open shot — fire in the exact direction the player is moving/facing.
       const shootSpeed = 420 + 360 * power;
 
-      this.ball.setVelocity(Math.cos(angleRad) * shootSpeed, Math.sin(angleRad) * shootSpeed);
-      this.ballZVelocity = (4 + 6 * power) + Math.random() * 2;
+      this.ball.setVelocity(kdx * shootSpeed, kdy * shootSpeed);
+      this.ballZVelocity = (2.5 + 4 * power) + Math.random();
 
       this.showCoachShout(teamNum, power > 0.7 ? 'SHOOT!!!' : 'GO ON!');
     }
