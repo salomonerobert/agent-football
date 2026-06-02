@@ -29,6 +29,7 @@ export class SoccerGameScene extends Phaser.Scene {
   preload() {
     this.load.image('pitch', '/assets/backgrounds/pitch.png');
     this.load.image('crowd', '/assets/backgrounds/crowd_stands.png');
+    this.load.image('goalposts', '/assets/sprites/goalposts.png');
     this.load.image('ad_board', '/assets/ui/ad_board.png');
     this.load.image('scoreboard', '/assets/ui/scoreboard.png');
     this.load.image('coach_portrait', '/assets/ui/coach_portrait.png');
@@ -61,14 +62,13 @@ export class SoccerGameScene extends Phaser.Scene {
     // 1. Pitch background (grass)
     this.add.image(width / 2, height / 2, 'pitch');
 
-    // 2. Crowd Stands (Spectators at Top and Bottom, matching GIF!)
-    // Narrow stands at the very top
+    // 2. Crowd Stands (Spectators at Top and Bottom)
     this.add.image(width / 2, 90, 'crowd').setScale(1, 0.22);
-    // Narrow stands at the very bottom (flipped)
     this.add.image(width / 2, 730, 'crowd').setScale(1, 0.12).setFlipY(true);
 
-    // Slice goalkeeper
+    // Slice goalkeeper & goalposts textures
     this.createGoalkeeperFrames();
+    this.createGoalpostFrames();
 
     // Static boundaries for goal collisions
     this.postsGroup = this.physics.add.staticGroup();
@@ -94,21 +94,22 @@ export class SoccerGameScene extends Phaser.Scene {
     this.postsGroup.add(rightTopPost);
     this.postsGroup.add(rightBottomPost);
 
-    // 3. Goalposts Graphic Layer is baked inside the pitch background!
-    // We don't overlay the double duplicate image.
+    // 3. Render cropped, correctly-scaled Goalposts (expose clean pitch while preserving nets)
+    this.leftGoal = this.add.image(126, 380, 'goalposts_left').setScale(0.38);
+    this.rightGoal = this.add.image(1282, 380, 'goalposts_right').setScale(0.38);
 
     this.createPlayerAnimations();
 
-    // 4. Create Outfield Blue Team (5-a-side: 4 outfield players + 1 GK)
+    // 4. Create Outfield Blue Team (5-a-side)
     const blueSpawnCoords = [
-      { x: 450, y: 380, role: 'active' }, // Initial user-controlled player
-      { x: 320, y: 250, role: 'teammate' }, // Defender Top
-      { x: 320, y: 510, role: 'teammate' }, // Defender Bottom
-      { x: 560, y: 380, role: 'teammate' }  // Forward
+      { x: 450, y: 380, role: 'active' },
+      { x: 320, y: 250, role: 'teammate' },
+      { x: 320, y: 510, role: 'teammate' },
+      { x: 560, y: 380, role: 'teammate' }
     ];
     blueSpawnCoords.forEach((coord, idx) => {
       const p = this.physics.add.sprite(coord.x, coord.y, 'player_blue', 0);
-      p.setScale(0.07); // Tiny top-down visual proportions
+      p.setScale(0.07); // Outfield players consistent size
       p.setCollideWorldBounds(true);
       p.body.setSize(160, 250);
       p.body.setOffset(96, 420);
@@ -120,10 +121,10 @@ export class SoccerGameScene extends Phaser.Scene {
 
     // 5. Create Outfield Red Team
     const redSpawnCoords = [
-      { x: 958, y: 380, role: 'active' }, // Initial user-controlled player
-      { x: 1088, y: 250, role: 'teammate' }, // Defender Top
-      { x: 1088, y: 510, role: 'teammate' }, // Defender Bottom
-      { x: 848, y: 380, role: 'teammate' }  // Forward
+      { x: 958, y: 380, role: 'active' },
+      { x: 1088, y: 250, role: 'teammate' },
+      { x: 1088, y: 510, role: 'teammate' },
+      { x: 848, y: 380, role: 'teammate' }
     ];
     redSpawnCoords.forEach((coord, idx) => {
       const p = this.physics.add.sprite(coord.x, coord.y, 'player_red', 0);
@@ -138,12 +139,11 @@ export class SoccerGameScene extends Phaser.Scene {
       this.redPlayers.push(p);
     });
 
-    // Enable colliders between all players
+    // Colliders between players
     for (let i = 0; i < 4; i++) {
       for (let j = 0; j < 4; j++) {
         this.physics.add.collider(this.bluePlayers[i], this.redPlayers[j]);
       }
-      // Colliders between teammates
       for (let k = i + 1; k < 4; k++) {
         this.physics.add.collider(this.bluePlayers[i], this.bluePlayers[k]);
         this.physics.add.collider(this.redPlayers[i], this.redPlayers[k]);
@@ -151,8 +151,9 @@ export class SoccerGameScene extends Phaser.Scene {
     }
 
     // 6. AI Goalkeeper 1 (Left Goal)
+    // Goalkeepers are consistent and slightly larger than outfield players!
     this.gk1 = this.physics.add.sprite(165, 380, 'goalkeeper_ready_0');
-    this.gk1.setScale(0.35); // Perfect goalkeeper proportions
+    this.gk1.setScale(0.22); // Perfectly proportional goalkeeper
     this.gk1.setCollideWorldBounds(true);
     this.gk1.body.setImmovable(true);
     this.gk1.play('gk_ready');
@@ -161,7 +162,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
     // 7. AI Goalkeeper 2 (Right Goal)
     this.gk2 = this.physics.add.sprite(1243, 380, 'goalkeeper_ready_0');
-    this.gk2.setScale(0.35);
+    this.gk2.setScale(0.22);
     this.gk2.setFlipX(true);
     this.gk2.setCollideWorldBounds(true);
     this.gk2.body.setImmovable(true);
@@ -169,27 +170,27 @@ export class SoccerGameScene extends Phaser.Scene {
     this.gk2.body.setSize(120, 160);
     this.gk2.body.setOffset(40, 20);
 
-    // 8. Ball Shadow visual helper
+    // 8. Ball Shadow
     this.ballShadow = this.add.circle(width / 2, 380, 5, 0x000000, 0.35);
 
     // 9. Ball Sprite
     this.ball = this.physics.add.sprite(width / 2, 380, 'ball');
-    this.ball.setScale(0.042); // Tiny ball
+    this.ball.setScale(0.042);
     this.ball.setCollideWorldBounds(true);
     this.ball.setDamping(true);
-    this.ball.setDrag(0.982); // turf friction
+    this.ball.setDrag(0.982);
     this.ball.setBounce(0.78);
     this.ball.body.setCircle(120);
     this.ball.body.setOffset(51, 51);
 
-    // Ground bounding boundary
+    // Bounds
     this.physics.world.setBounds(0, 175, width, 550);
 
     this.physics.add.collider(this.ball, this.postsGroup, () => {
       if (this.ballZ < 40) Sound.playBounce();
     });
 
-    // Collisions between ball and players (dribbling/soft kicks)
+    // Dribbling colliders
     this.bluePlayers.forEach(p => {
       this.physics.add.collider(p, this.ball, this.handlePlayerBallCollision, null, this);
     });
@@ -197,15 +198,15 @@ export class SoccerGameScene extends Phaser.Scene {
       this.physics.add.collider(p, this.ball, this.handlePlayerBallCollision, null, this);
     });
 
-    // Goalkeepers saving ball
+    // GK block
     this.physics.add.collider(this.ball, this.gk1, this.handleGkBlock, null, this);
     this.physics.add.collider(this.ball, this.gk2, this.handleGkBlock, null, this);
 
-    // Active controls glowing visual indicator (arrows above their head!)
+    // Control Indicators
     this.blueIndicator = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, 0x60a5fa).setOrigin(0.5);
     this.redIndicator = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, 0xf87171).setOrigin(0.5);
 
-    // 10. Foreground sideline Ad Boards
+    // 10. Ad Boards
     this.adBoard = this.add.image(width / 2, 715, 'ad_board').setScale(0.22);
 
     // 11. Scoreboard
@@ -234,7 +235,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
     this.setupCoaches();
 
-    // Controls setup
+    // Keys
     this.keys = this.input.keyboard.addKeys({
       w: Phaser.Input.Keyboard.KeyCodes.W,
       a: Phaser.Input.Keyboard.KeyCodes.A,
@@ -261,30 +262,19 @@ export class SoccerGameScene extends Phaser.Scene {
     if (!this.gameActive) return;
 
     this.updateBallHeight();
-
-    // 1. Smart Control Auto-Switching:
-    // Automatically switch active keyboard control to the teammate closest to the ball!
     this.handleAutoPlayerSwitching();
 
-    // Get active players
     const activeP1 = this.bluePlayers[this.activeBlueIdx];
     const activeP2 = this.redPlayers[this.activeRedIdx];
 
-    // Draw glowing controls indicators above the active players' heads
     this.blueIndicator.setPosition(activeP1.x, activeP1.y - 38);
     this.redIndicator.setPosition(activeP2.x, activeP2.y - 38);
 
-    // 2. Handle active players keyboard inputs
     this.handlePlayer1Input(activeP1, time);
     this.handlePlayer2Input(activeP2, time);
 
-    // 3. Teammates smart AI actions (positioning & tackling)
     this.updateTeammatesAI();
-
-    // 4. Goalkeepers tracking
     this.updateGkAI();
-
-    // 5. Goalmouth sensors
     this.checkGoals();
   }
 
@@ -295,7 +285,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
       if (this.ballZ <= 0) {
         this.ballZ = 0;
-        this.ballZVelocity = -this.ballZVelocity * 0.45; // Bounce
+        this.ballZVelocity = -this.ballZVelocity * 0.45;
         
         if (Math.abs(this.ballZVelocity) > 0.5) {
           Sound.playBounce();
@@ -305,21 +295,16 @@ export class SoccerGameScene extends Phaser.Scene {
       }
     }
 
-    // Height visual Y offset
     this.ball.y = this.ball.body.y + this.ball.body.halfHeight - this.ballZ;
-
-    // Shadow position
     this.ballShadow.x = this.ball.x;
     this.ballShadow.y = this.ball.body.y + this.ball.body.halfHeight;
 
-    // Scale shadow based on height
     const scaleFactor = Math.max(0.3, 1 - this.ballZ / 200);
     this.ballShadow.setScale(scaleFactor);
     this.ballShadow.setAlpha(Math.max(0.1, 0.35 - this.ballZ / 400));
   }
 
   handleAutoPlayerSwitching() {
-    // Blue Team: find player closest to ball
     let minBlueDist = Infinity;
     let closestBlueIdx = 0;
     this.bluePlayers.forEach((p, idx) => {
@@ -331,12 +316,10 @@ export class SoccerGameScene extends Phaser.Scene {
     });
 
     if (closestBlueIdx !== this.activeBlueIdx) {
-      // Reset previous active player speed
       this.bluePlayers[this.activeBlueIdx].setVelocity(0, 0);
       this.activeBlueIdx = closestBlueIdx;
     }
 
-    // Red Team: find player closest to ball
     let minRedDist = Infinity;
     let closestRedIdx = 0;
     this.redPlayers.forEach((p, idx) => {
@@ -380,7 +363,6 @@ export class SoccerGameScene extends Phaser.Scene {
 
     const isRunning = dx !== 0 || dy !== 0;
 
-    // Active power kick / pass
     const isKicking = this.keys.space.isDown;
     if (isKicking && time > this.p1KickTime + 300) {
       activePlayer.play('blue_kick', true);
@@ -422,7 +404,6 @@ export class SoccerGameScene extends Phaser.Scene {
 
     const isRunning = dx !== 0 || dy !== 0;
 
-    // Kick
     const isKicking = this.keys.enter.isDown;
     if (isKicking && time > this.p2KickTime + 300) {
       activePlayer.play('red_kick', true);
@@ -444,9 +425,6 @@ export class SoccerGameScene extends Phaser.Scene {
       this.cameras.main.shake(80, 0.004);
 
       const teammates = teamNum === 1 ? this.bluePlayers : this.redPlayers;
-      
-      // 1. Smart Passing:
-      // If the user holds a directional input and there's a teammate in that general direction, PASS to them!
       const passTarget = this.findTeammateInDirection(player, teammates, dx, dy);
       
       if (passTarget) {
@@ -454,19 +432,16 @@ export class SoccerGameScene extends Phaser.Scene {
         const passSpeed = 450;
         
         this.ball.setVelocity(Math.cos(angleRad) * passSpeed, Math.sin(angleRad) * passSpeed);
-        this.ballZVelocity = 2.8; // Safe flat air pass!
+        this.ballZVelocity = 2.8;
         
         this.showCoachShout(teamNum, 'BRILLIANT PASS!');
-      } 
-      // 2. Power Shot:
-      // If no teammate is targeted, perform a direct power shot forward!
-      else {
+      } else {
         const targetX = teamNum === 1 ? 1408 : 0;
         const angleRad = Phaser.Math.Angle.Between(player.x, player.y, targetX, this.ball.y) + (Math.random() * 0.12 - 0.06);
         const shootSpeed = 580;
         
         this.ball.setVelocity(Math.cos(angleRad) * shootSpeed, Math.sin(angleRad) * shootSpeed);
-        this.ballZVelocity = 7.5 + Math.random() * 3.5; // High flying shoot arc!
+        this.ballZVelocity = 7.5 + Math.random() * 3.5;
         
         this.showCoachShout(teamNum, 'SHOOT!!!');
       }
@@ -474,31 +449,26 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   findTeammateInDirection(player, teammates, dx, dy) {
-    // If no directional inputs, no target
     if (dx === 0 && dy === 0) return null;
 
     let bestTarget = null;
     let bestScore = -Infinity;
 
     teammates.forEach(mate => {
-      if (mate === player) return; // Skip self
+      if (mate === player) return;
 
-      // Direction vector from player to teammate
       const tdx = mate.x - player.x;
       const tdy = mate.y - player.y;
       const dist = Math.sqrt(tdx * tdx + tdy * tdy);
 
-      if (dist > 480) return; // Too far to pass
+      if (dist > 480) return;
 
-      // Normalizemate direction vector
       const ntx = tdx / dist;
       const nty = tdy / dist;
-
-      // Dot product checking if the teammate is aligned with our input direction
       const dot = ntx * dx + nty * dy;
 
-      if (dot > 0.68) { // High alignment score (approx. within 45 degrees)
-        const score = dot * 100 - dist * 0.1; // Prefers well-aligned, closer teammates
+      if (dot > 0.68) {
+        const score = dot * 100 - dist * 0.1;
         if (score > bestScore) {
           bestScore = score;
           bestTarget = mate;
@@ -513,7 +483,6 @@ export class SoccerGameScene extends Phaser.Scene {
     const pVelX = player.body.velocity.x;
     const pVelY = player.body.velocity.y;
 
-    // Dribbling: push ball softly
     if (Math.abs(pVelX) > 10 || Math.abs(pVelY) > 10) {
       ball.setVelocityX(pVelX * 0.85 + (player.x < ball.x ? 22 : -22));
       ball.setVelocityY(pVelY * 0.85 + (player.y < ball.y ? 22 : -22));
@@ -541,25 +510,20 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   updateTeammatesAI() {
-    // Determine team possessions
     let ballDistToBlue = Phaser.Math.Distance.Between(this.bluePlayers[this.activeBlueIdx].x, this.bluePlayers[this.activeBlueIdx].y, this.ball.x, this.ball.y);
     let ballDistToRed = Phaser.Math.Distance.Between(this.redPlayers[this.activeRedIdx].x, this.redPlayers[this.activeRedIdx].y, this.ball.x, this.ball.y);
     
     const blueHasPossession = ballDistToBlue < 150;
     const redHasPossession = ballDistToRed < 150;
 
-    // 1. Outfield Blue Teammates AI
     this.bluePlayers.forEach((p, idx) => {
-      if (idx === this.activeBlueIdx) return; // Skip active player
+      if (idx === this.activeBlueIdx) return;
 
-      // Smart tactical roles based on team state
       if (blueHasPossession) {
-        // Team has ball: Run forward to create spaces!
-        const targetX = this.ball.x + (idx === 3 ? 280 : 140); // Forwards push deeper
+        const targetX = this.ball.x + (idx === 3 ? 280 : 140);
         const targetY = idx === 1 ? 230 : (idx === 2 ? 530 : 380);
         this.moveTeammateTowards(p, targetX, targetY, 140);
       } else if (redHasPossession) {
-        // Opponent has ball: Teammate closest to ball tries to tackle!
         const distToBall = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
         let closestMateToBall = true;
         
@@ -571,16 +535,13 @@ export class SoccerGameScene extends Phaser.Scene {
         });
 
         if (closestMateToBall) {
-          // Sprint to intercept ball
           this.moveTeammateTowards(p, this.ball.x, this.ball.y, 180);
         } else {
-          // Back to defensive positions
           const targetX = idx === 1 ? 350 : (idx === 2 ? 350 : 480);
           const targetY = idx === 1 ? 260 : (idx === 2 ? 500 : 380);
           this.moveTeammateTowards(p, targetX, targetY, 120);
         }
       } else {
-        // Loose ball: closest Blue teammate runs to reclaim it!
         const distToBall = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
         let closestMate = true;
         this.bluePlayers.forEach((otherP, oIdx) => {
@@ -600,17 +561,14 @@ export class SoccerGameScene extends Phaser.Scene {
       }
     });
 
-    // 2. Outfield Red Teammates AI
     this.redPlayers.forEach((p, idx) => {
       if (idx === this.activeRedIdx) return;
 
       if (redHasPossession) {
-        // Attack mode
         const targetX = this.ball.x - (idx === 3 ? 280 : 140);
         const targetY = idx === 1 ? 230 : (idx === 2 ? 530 : 380);
         this.moveTeammateTowards(p, targetX, targetY, 140);
       } else if (blueHasPossession) {
-        // Defense mode
         const distToBall = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
         let closestMate = true;
         this.redPlayers.forEach((otherP, oIdx) => {
@@ -628,7 +586,6 @@ export class SoccerGameScene extends Phaser.Scene {
           this.moveTeammateTowards(p, targetX, targetY, 120);
         }
       } else {
-        // Loose ball reclaim
         const distToBall = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
         let closestMate = true;
         this.redPlayers.forEach((otherP, oIdx) => {
@@ -650,7 +607,6 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   moveTeammateTowards(player, x, y, speed) {
-    // Calculate target direction vector
     const dx = x - player.x;
     const dy = y - player.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -671,7 +627,6 @@ export class SoccerGameScene extends Phaser.Scene {
     const ballX = this.ball.x;
     const ballY = this.ball.y;
 
-    // Goalkeeper 1 (Left Goal)
     if (ballX < 450) {
       const targetY = Phaser.Math.Clamp(ballY, 280, 480);
       this.gk1.y += (targetY - this.gk1.y) * 0.08;
@@ -684,7 +639,6 @@ export class SoccerGameScene extends Phaser.Scene {
       this.gk1.y += (380 - this.gk1.y) * 0.05;
     }
 
-    // Goalkeeper 2 (Right Goal)
     if (ballX > 958) {
       const targetY = Phaser.Math.Clamp(ballY, 280, 480);
       this.gk2.y += (targetY - this.gk2.y) * 0.08;
@@ -769,7 +723,6 @@ export class SoccerGameScene extends Phaser.Scene {
     this.ballZ = 0;
     this.ballZVelocity = 0;
 
-    // Reset Blue outfield team positions
     const blueSpawnCoords = [
       { x: 450, y: 380 },
       { x: 320, y: 250 },
@@ -783,7 +736,6 @@ export class SoccerGameScene extends Phaser.Scene {
     });
     this.activeBlueIdx = 0;
 
-    // Reset Red outfield team
     const redSpawnCoords = [
       { x: 958, y: 380 },
       { x: 1088, y: 250 },
@@ -1013,5 +965,14 @@ export class SoccerGameScene extends Phaser.Scene {
       frameRate: 8,
       repeat: 0
     });
+  }
+
+  createGoalpostFrames() {
+    // Dynamically slice Left and Right goals from goalposts.png
+    // Left Goal Segment 0: X [35 to 673], Y [89 to 700] (Width: 639, Height: 612)
+    this.textures.get('goalposts').add('goalposts_left', 0, 35, 89, 639, 612);
+    
+    // Right Goal Segment 1: X [733 to 1364], Y [71 to 706] (Width: 632, Height: 636)
+    this.textures.get('goalposts').add('goalposts_right', 0, 733, 71, 632, 636);
   }
 }
