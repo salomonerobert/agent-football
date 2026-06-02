@@ -31,13 +31,15 @@ document.querySelector('#app').innerHTML = `
               <h3 class="blue-text">Player 1 (BLUE)</h3>
               <div class="control-row"><span>W / S</span><label>Move Up / Down</label></div>
               <div class="control-row"><span>A / D</span><label>Move Left / Right</label></div>
-              <div class="control-row"><span>SPACE</span><label>Power Kick / Shoot</label></div>
+              <div class="control-row"><span>SPACE</span><label>Hold to charge kick</label></div>
+              <div class="control-row"><span>SHIFT</span><label>Slide tackle</label></div>
             </div>
             <div class="guide-column p2-guide">
               <h3 class="red-text">Player 2 (RED)</h3>
               <div class="control-row"><span>▲ / ▼</span><label>Move Up / Down</label></div>
               <div class="control-row"><span>◀ / ▶</span><label>Move Left / Right</label></div>
-              <div class="control-row"><span>ENTER</span><label>Power Kick / Shoot</label></div>
+              <div class="control-row"><span>ENTER</span><label>Hold to charge kick</label></div>
+              <div class="control-row"><span>/</span><label>Slide tackle</label></div>
             </div>
           </div>
 

@@ -29,6 +29,28 @@ export class SoccerGameScene extends Phaser.Scene {
     // from oscillating between teammates that are near-equidistant to the ball)
     this.lastBlueSwitch = 0;
     this.lastRedSwitch = 0;
+
+    // Ball possession model — replaces the old ball↔player bounce collider.
+    // `possessor` is the outfield sprite currently dribbling (or null);
+    // `lastTouchTeam` (1/2) drives throw-in/goal-kick awards; `captureReadyAt`
+    // is a short window after a kick during which the ball can't be re-captured
+    // so it actually leaves the kicker's feet.
+    this.possessor = null;
+    this.lastTouchTeam = 0;
+    this.captureReadyAt = 0;
+
+    // Charged-kick state (hold to build power, release to kick)
+    this.p1Charging = false;
+    this.p1ChargeStart = 0;
+    this.p2Charging = false;
+    this.p2ChargeStart = 0;
+
+    // Slide-tackle state per player { active, endAt, cooldownUntil }
+    this.p1Tackle = { active: false, endAt: 0, cooldownUntil: 0 };
+    this.p2Tackle = { active: false, endAt: 0, cooldownUntil: 0 };
+
+    // Out-of-bounds restart guard (throw-in / goal kick in progress)
+    this.throwInActive = false;
   }
 
   preload() {
@@ -171,9 +193,14 @@ export class SoccerGameScene extends Phaser.Scene {
     // 9. Ball Sprite
     this.ball = this.physics.add.sprite(width / 2, 380, 'ball');
     this.ball.setScale(0.042);
-    this.ball.setCollideWorldBounds(true);
+    // The ball is NOT world-bounds-bound: it must be allowed to cross the
+    // touchlines / goal lines so checkOutOfBounds() can award a throw-in.
+    // A hard clamp in checkOutOfBounds keeps it from ever leaving the canvas.
+    this.ball.setCollideWorldBounds(false);
     this.ball.setDamping(true);
-    this.ball.setDrag(0.982);
+    // Drag is set dynamically each frame in updateBallHeight() — heavy on the
+    // ground (rolling friction) so the ball slows and settles, light in the air.
+    this.ball.setDrag(0.55);
     this.ball.setBounce(0.78);
     // The ball art is a ~170px-radius circle centred at (~702, 384) in the
     // 1408x768 frame — centre the physics body on it so collisions and the
@@ -187,13 +214,8 @@ export class SoccerGameScene extends Phaser.Scene {
       if (this.ballZ < 40) Sound.playBounce();
     });
 
-    // Dribbling colliders
-    this.bluePlayers.forEach(p => {
-      this.physics.add.collider(p, this.ball, this.handlePlayerBallCollision, null, this);
-    });
-    this.redPlayers.forEach(p => {
-      this.physics.add.collider(p, this.ball, this.handlePlayerBallCollision, null, this);
-    });
+    // Ball↔player contact is handled by the possession model in
+    // updatePossession() (sticky dribbling), NOT a physics bounce collider.
 
     // GK block
     this.physics.add.collider(this.ball, this.gk1, this.handleGkBlock, null, this);
@@ -202,6 +224,10 @@ export class SoccerGameScene extends Phaser.Scene {
     // Control Indicators
     this.blueIndicator = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, 0x60a5fa).setOrigin(0.5);
     this.redIndicator = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, 0xf87171).setOrigin(0.5);
+
+    // Power meter for charged kicks — redrawn each frame above the charging
+    // player (see updatePowerMeter); empty when nobody is charging.
+    this.powerBarGfx = this.add.graphics();
 
     // 10. Ad Boards
     this.adBoard = this.add.image(width / 2, 715, 'ad_board').setScale(0.22);
@@ -240,11 +266,14 @@ export class SoccerGameScene extends Phaser.Scene {
       d: Phaser.Input.Keyboard.KeyCodes.D,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       
+      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT, // P1 slide tackle
+
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       left: Phaser.Input.Keyboard.KeyCodes.LEFT,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
       right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      enter: Phaser.Input.Keyboard.KeyCodes.ENTER
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      slash: Phaser.Input.Keyboard.KeyCodes.FORWARD_SLASH // P2 slide tackle
     });
 
     this.p1KickTime = 0;
@@ -258,7 +287,8 @@ export class SoccerGameScene extends Phaser.Scene {
   update(time, delta) {
     if (!this.gameActive) return;
 
-    this.updateBallHeight();
+    this.updateBallHeight(delta);
+    this.updatePossession(time);
     this.handleAutoPlayerSwitching(time);
 
     const activeP1 = this.bluePlayers[this.activeBlueIdx];
@@ -269,13 +299,16 @@ export class SoccerGameScene extends Phaser.Scene {
 
     this.handlePlayer1Input(activeP1, time);
     this.handlePlayer2Input(activeP2, time);
+    this.updateTackles(time);
+    this.updatePowerMeter(time, activeP1, activeP2);
 
     this.updateTeammatesAI();
     this.updateGkAI();
     this.checkGoals();
+    this.checkOutOfBounds(time);
   }
 
-  updateBallHeight() {
+  updateBallHeight(delta) {
     if (this.ballZ > 0 || this.ballZVelocity > 0) {
       this.ballZVelocity += this.gravityZ;
       this.ballZ += this.ballZVelocity;
@@ -283,7 +316,7 @@ export class SoccerGameScene extends Phaser.Scene {
       if (this.ballZ <= 0) {
         this.ballZ = 0;
         this.ballZVelocity = -this.ballZVelocity * 0.45;
-        
+
         if (Math.abs(this.ballZVelocity) > 0.5) {
           Sound.playBounce();
         } else {
@@ -291,6 +324,22 @@ export class SoccerGameScene extends Phaser.Scene {
         }
       }
     }
+
+    // Rolling friction: a loose ball on the ground decelerates and settles;
+    // a lofted ball keeps its pace until it lands. (Damping is enabled, so
+    // drag is a per-second retention coefficient — lower = more friction.)
+    // The possessor dribbles by directly setting velocity, so leave its drag
+    // light to avoid fighting the glue.
+    const airborne = this.ballZ > 5;
+    this.ball.body.drag.set(this.possessor || airborne ? 0.9 : 0.55);
+
+    // Visual roll — spin the sprite in the travel direction, scaled by speed.
+    // Barely spins when lofted (it's flying, not rolling).
+    const v = this.ball.body.velocity;
+    const speed = Math.hypot(v.x, v.y);
+    const dir = Math.abs(v.x) > 1 ? Math.sign(v.x) : (Math.abs(v.y) > 1 ? Math.sign(v.y) : 0);
+    const groundedFactor = Math.max(0, 1 - this.ballZ / 120);
+    this.ball.rotation += dir * speed * 0.00009 * (delta || 16) * groundedFactor;
 
     this.ball.y = this.ball.body.y + this.ball.body.halfHeight - this.ballZ;
     this.ballShadow.x = this.ball.x;
@@ -302,12 +351,19 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   handleAutoPlayerSwitching(time) {
-    this.activeBlueIdx = this.resolveActivePlayer(
-      this.bluePlayers, this.activeBlueIdx, 'blue', time
-    );
-    this.activeRedIdx = this.resolveActivePlayer(
-      this.redPlayers, this.activeRedIdx, 'red', time
-    );
+    // When a team has the ball, control is pinned to the dribbler by
+    // updatePossession() — don't let the chase heuristic override it.
+    const possTeam = this.possessor ? this.possessor.getData('team') : 0;
+    if (possTeam !== 1) {
+      this.activeBlueIdx = this.resolveActivePlayer(
+        this.bluePlayers, this.activeBlueIdx, 'blue', time
+      );
+    }
+    if (possTeam !== 2) {
+      this.activeRedIdx = this.resolveActivePlayer(
+        this.redPlayers, this.activeRedIdx, 'red', time
+      );
+    }
   }
 
   // Reassign control to the teammate nearest the ball, but only when that
@@ -345,7 +401,61 @@ export class SoccerGameScene extends Phaser.Scene {
     return activeIdx;
   }
 
+  // Sticky-dribbling possession. A loose ball on the ground is captured by the
+  // nearest outfield player; while possessed it glues to the dribbler's feet
+  // and control snaps to that player. Replaces the old bounce collider.
+  updatePossession(time) {
+    const CAPTURE_RADIUS = 46;
+    const FOOT_OFFSET = 26;
+
+    if (this.possessor) {
+      const p = this.possessor;
+      // Possession ends if the carrier is disabled or the ball was kicked away.
+      if (!p.body || !p.body.enable) {
+        this.possessor = null;
+      } else {
+        const dir = p.flipX ? -1 : 1;
+        // Glue the ball just ahead of the dribbler's feet. body.reset() teleports
+        // it cleanly (zeroing the postUpdate delta) so it tracks without jitter;
+        // the follow-up velocity gives it momentum for a natural roll/release.
+        this.ball.body.reset(p.x + dir * FOOT_OFFSET, p.y + 8);
+        this.ball.setVelocity(p.body.velocity.x + dir * 30, p.body.velocity.y);
+        this.ballZ = 0;
+        this.ballZVelocity = 0;
+        this.lastTouchTeam = p.getData('team');
+
+        // Pin control to the carrier so the human drives whoever has the ball.
+        if (p.getData('team') === 1) this.activeBlueIdx = p.getData('idx');
+        else this.activeRedIdx = p.getData('idx');
+        return;
+      }
+    }
+
+    // No possessor: try to capture a slow, grounded ball with the nearest
+    // outfield player (skipped briefly after a kick, and during restarts).
+    if (this.throwInActive || time < this.captureReadyAt || this.ballZ > 45) return;
+
+    let best = null;
+    let bestDist = CAPTURE_RADIUS;
+    [...this.bluePlayers, ...this.redPlayers].forEach(p => {
+      if (!p.body || !p.body.enable) return;
+      const d = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
+      if (d < bestDist) {
+        bestDist = d;
+        best = p;
+      }
+    });
+
+    if (best) {
+      this.possessor = best;
+      this.lastTouchTeam = best.getData('team');
+    }
+  }
+
   handlePlayer1Input(activePlayer, time) {
+    // A sliding player can't be steered or kick — the lunge owns the velocity.
+    if (this.p1Tackle.active) return;
+
     let dx = 0;
     let dy = 0;
 
@@ -372,12 +482,26 @@ export class SoccerGameScene extends Phaser.Scene {
 
     const isRunning = dx !== 0 || dy !== 0;
 
-    const isKicking = this.keys.space.isDown;
-    if (isKicking && time > this.p1KickTime + 300) {
+    // Slide tackle (Left SHIFT)
+    if (Phaser.Input.Keyboard.JustDown(this.keys.shift)) {
+      this.startTackle(activePlayer, 1, dx, dy, time);
+    }
+
+    // Hold SPACE to charge, release to kick with power proportional to hold.
+    if (this.keys.space.isDown) {
+      if (!this.p1Charging) {
+        this.p1Charging = true;
+        this.p1ChargeStart = time;
+      }
+    } else if (this.p1Charging) {
+      this.p1Charging = false;
+      const power = this.chargePower(time - this.p1ChargeStart);
       activePlayer.play('blue_kick', true);
       this.p1KickTime = time;
-      this.triggerTeamKick(activePlayer, 1, dx, dy);
-    } else if (time > this.p1KickTime + 180) {
+      this.releaseKick(activePlayer, 1, dx, dy, power);
+    }
+
+    if (time > this.p1KickTime + 180) {
       if (isRunning) {
         activePlayer.play('blue_run', true);
       } else {
@@ -387,6 +511,8 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   handlePlayer2Input(activePlayer, time) {
+    if (this.p2Tackle.active) return;
+
     let dx = 0;
     let dy = 0;
 
@@ -413,12 +539,26 @@ export class SoccerGameScene extends Phaser.Scene {
 
     const isRunning = dx !== 0 || dy !== 0;
 
-    const isKicking = this.keys.enter.isDown;
-    if (isKicking && time > this.p2KickTime + 300) {
+    // Slide tackle (forward-slash)
+    if (Phaser.Input.Keyboard.JustDown(this.keys.slash)) {
+      this.startTackle(activePlayer, 2, dx, dy, time);
+    }
+
+    // Hold ENTER to charge, release to kick.
+    if (this.keys.enter.isDown) {
+      if (!this.p2Charging) {
+        this.p2Charging = true;
+        this.p2ChargeStart = time;
+      }
+    } else if (this.p2Charging) {
+      this.p2Charging = false;
+      const power = this.chargePower(time - this.p2ChargeStart);
       activePlayer.play('red_kick', true);
       this.p2KickTime = time;
-      this.triggerTeamKick(activePlayer, 2, dx, dy);
-    } else if (time > this.p2KickTime + 180) {
+      this.releaseKick(activePlayer, 2, dx, dy, power);
+    }
+
+    if (time > this.p2KickTime + 180) {
       if (isRunning) {
         activePlayer.play('red_run', true);
       } else {
@@ -427,34 +567,55 @@ export class SoccerGameScene extends Phaser.Scene {
     }
   }
 
-  triggerTeamKick(player, teamNum, dx, dy) {
-    const dist = Phaser.Math.Distance.Between(player.x, player.y, this.ball.x, this.ball.y);
-    if (dist < 75) {
-      Sound.playKick();
-      this.cameras.main.shake(80, 0.004);
+  // Map a charge hold duration (ms) to a kick power in [0.35, 1.0].
+  chargePower(heldMs) {
+    const MAX_CHARGE_MS = 700;
+    return 0.35 + 0.65 * Phaser.Math.Clamp(heldMs / MAX_CHARGE_MS, 0, 1);
+  }
 
-      const teammates = teamNum === 1 ? this.bluePlayers : this.redPlayers;
-      const passTarget = this.findTeammateInDirection(player, teammates, dx, dy);
-      
-      if (passTarget) {
-        const angleRad = Phaser.Math.Angle.Between(player.x, player.y, passTarget.x, passTarget.y);
-        const passSpeed = 450;
-        
-        this.ball.setVelocity(Math.cos(angleRad) * passSpeed, Math.sin(angleRad) * passSpeed);
-        this.ballZVelocity = 2.8;
-        
-        this.showCoachShout(teamNum, 'BRILLIANT PASS!');
-      } else {
-        const targetX = teamNum === 1 ? 1408 : 0;
-        const angleRad = Phaser.Math.Angle.Between(player.x, player.y, targetX, this.ball.y) + (Math.random() * 0.12 - 0.06);
-        const shootSpeed = 580;
-        
-        this.ball.setVelocity(Math.cos(angleRad) * shootSpeed, Math.sin(angleRad) * shootSpeed);
-        this.ballZVelocity = 7.5 + Math.random() * 3.5;
-        
-        this.showCoachShout(teamNum, 'SHOOT!!!');
-      }
+  // Release the ball with a kick whose strength scales with `power` (0..1).
+  // Decides pass vs shot from the held direction, then clears possession so the
+  // ball actually leaves the kicker's feet.
+  releaseKick(player, teamNum, dx, dy, power) {
+    const dist = Phaser.Math.Distance.Between(player.x, player.y, this.ball.x, this.ball.y);
+    const hasBall = this.possessor === player;
+    if (!hasBall && dist >= 75) return;
+
+    Sound.playKick();
+    this.cameras.main.shake(60 + power * 90, 0.003 + power * 0.004);
+
+    // Releasing always relinquishes possession; the capture cooldown keeps the
+    // same player from instantly re-grabbing the ball.
+    if (this.possessor === player) this.possessor = null;
+    this.captureReadyAt = this.time.now + 260;
+    this.lastTouchTeam = teamNum;
+
+    const teammates = teamNum === 1 ? this.bluePlayers : this.redPlayers;
+    const passTarget = this.findTeammateInDirection(player, teammates, dx, dy);
+
+    if (passTarget) {
+      const angleRad = Phaser.Math.Angle.Between(player.x, player.y, passTarget.x, passTarget.y);
+      const passSpeed = 300 + 360 * power;
+
+      this.ball.setVelocity(Math.cos(angleRad) * passSpeed, Math.sin(angleRad) * passSpeed);
+      this.ballZVelocity = 1.5 + 2.5 * power;
+
+      this.showCoachShout(teamNum, power > 0.8 ? 'BRILLIANT PASS!' : 'NICE BALL!');
+    } else {
+      const targetX = teamNum === 1 ? 1408 : 0;
+      const angleRad = Phaser.Math.Angle.Between(player.x, player.y, targetX, this.ball.y) + (Math.random() * 0.12 - 0.06);
+      const shootSpeed = 420 + 360 * power;
+
+      this.ball.setVelocity(Math.cos(angleRad) * shootSpeed, Math.sin(angleRad) * shootSpeed);
+      this.ballZVelocity = (4 + 6 * power) + Math.random() * 2;
+
+      this.showCoachShout(teamNum, power > 0.7 ? 'SHOOT!!!' : 'GO ON!');
     }
+  }
+
+  // Back-compat thin wrapper (coach "shoot" command uses a fixed strong power).
+  triggerTeamKick(player, teamNum, dx, dy) {
+    this.releaseKick(player, teamNum, dx, dy, 0.85);
   }
 
   findTeammateInDirection(player, teammates, dx, dy) {
@@ -488,30 +649,115 @@ export class SoccerGameScene extends Phaser.Scene {
     return bestTarget;
   }
 
-  handlePlayerBallCollision(player, ball) {
-    const pVelX = player.body.velocity.x;
-    const pVelY = player.body.velocity.y;
+  // --- Slide tackle ---
+  startTackle(player, teamNum, dx, dy, time) {
+    const state = teamNum === 1 ? this.p1Tackle : this.p2Tackle;
+    if (state.active || time < state.cooldownUntil) return;
 
-    if (Math.abs(pVelX) > 10 || Math.abs(pVelY) > 10) {
-      ball.setVelocityX(pVelX * 0.85 + (player.x < ball.x ? 22 : -22));
-      ball.setVelocityY(pVelY * 0.85 + (player.y < ball.y ? 22 : -22));
+    // Lunge in the held direction, or straight ahead (facing) if standing still.
+    let lx = dx;
+    let ly = dy;
+    if (lx === 0 && ly === 0) lx = player.flipX ? -1 : 1;
+    const len = Math.hypot(lx, ly) || 1;
+    const LUNGE = 420;
+    player.setVelocity((lx / len) * LUNGE, (ly / len) * LUNGE);
 
-      if (this.ballZ === 0 && Math.random() < 0.3) {
-        this.ballZVelocity = 1.6;
-        Sound.playBounce();
-      }
+    // No dedicated slide frame (only 4 frames) — fake the pose with rotation+tint.
+    player.setRotation((player.flipX ? -1 : 1) * 1.2);
+    player.setTint(0xffe08a);
+    player.play(teamNum === 1 ? 'blue_run' : 'red_run', true);
+
+    state.active = true;
+    state.endAt = time + 320;
+    // A player committing to a slide loses the ball they were carrying.
+    if (this.possessor === player) {
+      this.possessor = null;
+      this.captureReadyAt = time + 200;
     }
+    // Cancel any kick charge in progress for this player.
+    if (teamNum === 1) this.p1Charging = false; else this.p2Charging = false;
+    Sound.playJump();
+  }
+
+  updateTackles(time) {
+    [[this.p1Tackle, this.bluePlayers, this.activeBlueIdx, 1],
+     [this.p2Tackle, this.redPlayers, this.activeRedIdx, 2]].forEach(([state, team, idx, teamNum]) => {
+      if (!state.active) return;
+      const tackler = team[idx];
+
+      // Steal: a sliding player reaching the ball wins possession.
+      const dBall = Phaser.Math.Distance.Between(tackler.x, tackler.y, this.ball.x, this.ball.y);
+      if (dBall < 52 && time >= this.captureReadyAt) {
+        if (this.possessor && this.possessor.getData('team') !== teamNum) {
+          this.showCoachShout(teamNum, 'GREAT TACKLE!');
+        }
+        this.possessor = tackler;
+        this.lastTouchTeam = teamNum;
+      }
+
+      // Knock back any opponent the slide catches and briefly stun them.
+      const opponents = teamNum === 1 ? this.redPlayers : this.bluePlayers;
+      opponents.forEach(opp => {
+        if (!opp.body || !opp.body.enable) return;
+        const d = Phaser.Math.Distance.Between(tackler.x, tackler.y, opp.x, opp.y);
+        if (d < 56) {
+          const ang = Phaser.Math.Angle.Between(tackler.x, tackler.y, opp.x, opp.y);
+          opp.setVelocity(Math.cos(ang) * 260, Math.sin(ang) * 260);
+          if (this.possessor === opp) {
+            this.possessor = null;
+            this.captureReadyAt = time + 150;
+          }
+        }
+      });
+
+      if (time >= state.endAt) {
+        state.active = false;
+        state.cooldownUntil = time + 900;
+        tackler.setRotation(0);
+        tackler.clearTint();
+        tackler.setVelocity(0, 0);
+      }
+    });
+  }
+
+  // Draw a power bar above a charging player (one bar per charging team).
+  updatePowerMeter(time, activeP1, activeP2) {
+    const g = this.powerBarGfx;
+    g.clear();
+
+    const drawBar = (player, charging, startTime, color) => {
+      if (!charging) return;
+      const power = this.chargePower(time - startTime);
+      const w = 44;
+      const h = 6;
+      const x = player.x - w / 2;
+      const y = player.y - 52;
+      g.fillStyle(0x000000, 0.6);
+      g.fillRect(x - 1, y - 1, w + 2, h + 2);
+      g.fillStyle(0xffffff, 0.25);
+      g.fillRect(x, y, w, h);
+      g.fillStyle(color, 1);
+      g.fillRect(x, y, w * power, h);
+    };
+
+    drawBar(activeP1, this.p1Charging, this.p1ChargeStart, 0x60a5fa);
+    drawBar(activeP2, this.p2Charging, this.p2ChargeStart, 0xf87171);
   }
 
   handleGkBlock(ball, gk) {
     if (this.ballZ < 65) {
       Sound.playBounce();
       this.cameras.main.shake(80, 0.003);
-      
+
+      // A save knocks the ball off whoever carried it into the keeper.
+      this.possessor = null;
+      this.captureReadyAt = this.time.now + 300;
+
       const direction = gk.x < 700 ? 1 : -1;
       ball.setVelocityX(direction * (240 + Math.random() * 160));
       ball.setVelocityY((Math.random() * 2 - 1) * 150);
       this.ballZVelocity = 3.5 + Math.random() * 2.5;
+      this.lastTouchTeam = gk.x < 700 ? 1 : 2;
 
       const gkNum = gk.x < 700 ? 1 : 2;
       this.showCoachShout(gkNum, 'WORLD CLASS SAVE!');
@@ -674,6 +920,90 @@ export class SoccerGameScene extends Phaser.Scene {
     }
   }
 
+  // Detect the ball leaving the field of play and award a throw-in (touchline)
+  // or goal kick (goal line outside the scoring mouth) to the team that did NOT
+  // touch it last. Runs after checkGoals() so a real goal always wins.
+  checkOutOfBounds(time) {
+    // Only a loose/kicked ball goes out — a dribbler keeps it in play.
+    if (this.isResetting || this.throwInActive || this.possessor) return;
+
+    const TOUCH_TOP = 178;
+    const TOUCH_BOTTOM = 662;
+    const GOAL_LINE_L = 150;
+    const GOAL_LINE_R = 1258;
+
+    const bx = this.ball.x;
+    // Use the ball's ground position (not the z-offset rendered y) so a high
+    // ball flying over the line isn't mis-flagged based on its visual height.
+    const by = this.ball.body.y + this.ball.body.halfHeight;
+
+    let label = null;
+    let x = bx;
+    let y = by;
+
+    if (by < TOUCH_TOP) { label = 'THROW-IN'; y = TOUCH_TOP + 14; }
+    else if (by > TOUCH_BOTTOM) { label = 'THROW-IN'; y = TOUCH_BOTTOM - 14; }
+    else if (bx < GOAL_LINE_L) { label = 'GOAL KICK'; x = GOAL_LINE_L + 24; }
+    else if (bx > GOAL_LINE_R) { label = 'GOAL KICK'; x = GOAL_LINE_R - 24; }
+
+    if (!label) return;
+
+    // Keep the restart spot well inside the field.
+    x = Phaser.Math.Clamp(x, 60, 1348);
+    y = Phaser.Math.Clamp(y, TOUCH_TOP + 14, TOUCH_BOTTOM - 14);
+
+    const awardTeam = this.lastTouchTeam === 1 ? 2 : 1;
+    this.doRestart(awardTeam, x, y, label);
+  }
+
+  // Place the ball back in play at (x, y) and hand possession to the awarded
+  // team's nearest player. A short freeze prevents the OOB check from
+  // re-triggering on the same frame the ball is still past the line.
+  doRestart(teamNum, x, y, label) {
+    this.throwInActive = true;
+    this.possessor = null;
+    this.captureReadyAt = this.time.now + 400;
+
+    this.ball.body.reset(x, y);
+    this.ballZ = 0;
+    this.ballZVelocity = 0;
+
+    const team = teamNum === 1 ? this.bluePlayers : this.redPlayers;
+    let taker = team[0];
+    let bestDist = Infinity;
+    team.forEach(p => {
+      const d = Phaser.Math.Distance.Between(p.x, p.y, x, y);
+      if (d < bestDist) { bestDist = d; taker = p; }
+    });
+    // Bring the taker to the ball and face it inward.
+    const inward = teamNum === 1 ? 1 : -1;
+    taker.setPosition(x - inward * 34, y);
+    taker.setVelocity(0, 0);
+    taker.setFlipX(inward < 0);
+    if (teamNum === 1) this.activeBlueIdx = taker.getData('idx');
+    else this.activeRedIdx = taker.getData('idx');
+    this.lastTouchTeam = teamNum;
+
+    const banner = this.add.text(x, y - 60, label, {
+      fontFamily: '"Outfit", "Inter", Arial, sans-serif',
+      fontSize: '28px',
+      color: teamNum === 1 ? '#3b82f6' : '#ef4444',
+      fontStyle: 'bold',
+      stroke: '#ffffff',
+      strokeThickness: 5
+    }).setOrigin(0.5).setDepth(20);
+    this.showCoachShout(teamNum, label + '!');
+    Sound.playWhistle();
+
+    this.time.delayedCall(700, () => {
+      banner.destroy();
+      this.throwInActive = false;
+      // Give the taker the ball so play resumes under their control.
+      this.possessor = taker;
+      this.captureReadyAt = 0;
+    });
+  }
+
   scoreGoal(scoringPlayer) {
     this.isResetting = true;
     Sound.playGoal();
@@ -726,9 +1056,21 @@ export class SoccerGameScene extends Phaser.Scene {
 
   resetPositionsAfterGoal() {
     const width = this.sys.game.config.width;
-    
+
+    // Clear ball-state machines so the kickoff starts neutral.
+    this.possessor = null;
+    this.throwInActive = false;
+    this.captureReadyAt = 0;
+    this.lastTouchTeam = 0;
+    this.p1Charging = false;
+    this.p2Charging = false;
+    this.p1Tackle = { active: false, endAt: 0, cooldownUntil: 0 };
+    this.p2Tackle = { active: false, endAt: 0, cooldownUntil: 0 };
+    if (this.powerBarGfx) this.powerBarGfx.clear();
+
     this.ball.setPosition(width / 2, 380);
     this.ball.setVelocity(0, 0);
+    this.ball.setRotation(0);
     this.ballZ = 0;
     this.ballZVelocity = 0;
 
@@ -741,6 +1083,8 @@ export class SoccerGameScene extends Phaser.Scene {
     this.bluePlayers.forEach((p, idx) => {
       p.setPosition(blueSpawnCoords[idx].x, blueSpawnCoords[idx].y);
       p.setVelocity(0, 0);
+      p.setRotation(0);
+      p.clearTint();
       p.play('blue_idle');
     });
     this.activeBlueIdx = 0;
@@ -754,6 +1098,8 @@ export class SoccerGameScene extends Phaser.Scene {
     this.redPlayers.forEach((p, idx) => {
       p.setPosition(redSpawnCoords[idx].x, redSpawnCoords[idx].y);
       p.setVelocity(0, 0);
+      p.setRotation(0);
+      p.clearTint();
       p.play('red_idle');
     });
     this.activeRedIdx = 0;
