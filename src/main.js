@@ -116,20 +116,7 @@ rematchBtn.addEventListener('click', () => {
   
   if (gameInstance) {
     const scene = gameInstance.scene.getScene('SoccerGameScene');
-    scene.score1 = 0;
-    scene.score2 = 0;
-    scene.matchTime = 90;
-    scene.scoreText1.setText('0');
-    scene.scoreText2.setText('0');
-    scene.timeText.setText('01:30');
-    scene.resetPositionsAfterGoal();
-    scene.startTimer();
-    scene.gameActive = true;
-    
-    scene.ball.body.setEnable(true);
-    scene.player1.body.setEnable(true);
-    scene.player2.body.setEnable(true);
-    
+    scene.restartMatch();
     Sound.playWhistle();
   }
 });
@@ -147,27 +134,16 @@ function triggerShout() {
       // Display shout visual speech bubble for Coach 1 (Player 1's Coach)
       scene.showCoachShout(1, msg.toUpperCase());
       
-      // Interactive AI reactions!
+      // Interactive AI reactions! (act on Player 1 / BLUE's active player)
       const lowerMsg = msg.toLowerCase();
       if (lowerMsg === 'shoot' || lowerMsg === 'kick') {
-        scene.triggerPlayerKick(scene.player1, 1);
+        scene.coachShoot(1);
       } else if (lowerMsg === 'jump' || lowerMsg === 'head') {
-        // High hop on the field!
-        scene.tweens.add({
-          targets: scene.player1,
-          y: scene.player1.y - 80,
-          duration: 150,
-          yoyo: true,
-          onStart: () => { Sound.playJump(); }
-        });
+        scene.coachJump(1);
       } else if (lowerMsg === 'defend') {
-        // Move Player 1 back to defensive area
-        scene.player1.setPosition(380, scene.player1.y);
-        scene.showCoachShout(1, 'FALLING BACK!');
+        scene.coachDefend(1);
       } else if (lowerMsg === 'attack') {
-        // Advance Player 1 forward
-        scene.player1.setPosition(750, scene.player1.y);
-        scene.showCoachShout(1, 'GOING FORWARD!');
+        scene.coachAttack(1);
       }
     }
     shoutInput.value = '';

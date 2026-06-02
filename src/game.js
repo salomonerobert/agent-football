@@ -24,12 +24,16 @@ export class SoccerGameScene extends Phaser.Scene {
     this.redPlayers = [];
     this.activeBlueIdx = 0;
     this.activeRedIdx = 0;
+
+    // Active-player auto-switch debouncing (prevents the controlled player
+    // from oscillating between teammates that are near-equidistant to the ball)
+    this.lastBlueSwitch = 0;
+    this.lastRedSwitch = 0;
   }
 
   preload() {
     this.load.image('pitch', '/assets/backgrounds/pitch.png');
     this.load.image('crowd', '/assets/backgrounds/crowd_stands.png');
-    this.load.image('goalposts', '/assets/sprites/goalposts.png');
     this.load.image('ad_board', '/assets/ui/ad_board.png');
     this.load.image('scoreboard', '/assets/ui/scoreboard.png');
     this.load.image('coach_portrait', '/assets/ui/coach_portrait.png');
@@ -62,41 +66,31 @@ export class SoccerGameScene extends Phaser.Scene {
     // 1. Pitch background (grass)
     this.add.image(width / 2, height / 2, 'pitch');
 
-    // 2. Crowd Stands (Spectators at Top and Bottom)
-    this.add.image(width / 2, 90, 'crowd').setScale(1, 0.22);
-    this.add.image(width / 2, 730, 'crowd').setScale(1, 0.12).setFlipY(true);
+    // 2. Crowd Stands — show a full-width strip at native aspect ratio so the
+    //    spectators are NOT squished. We slice a horizontal band out of the
+    //    source texture and render it at scale 1 (the band's own aspect ratio
+    //    already matches the screen width, so no distortion occurs).
+    this.createCrowdStrips();
+    // Drawn after the (opaque) pitch so the stands sit on top of its edges.
+    this.add.image(width / 2, 75, 'crowd', 'crowd_top');
+    this.add.image(width / 2, height - 40, 'crowd', 'crowd_bottom').setFlipY(true);
 
-    // Slice goalkeeper & goalposts textures
+    // Slice goalkeeper texture into animation frames
     this.createGoalkeeperFrames();
-    this.createGoalpostFrames();
 
-    // Static boundaries for goal collisions
+    // 3. Goals — geometry shared by the drawn nets, the collision walls and
+    //    the goal-line scoring test in checkGoals().
+    this.goalMouthTop = 262;
+    this.goalMouthBottom = 498;
+    this.leftGoalLine = 238;   // ball crosses this (moving left) to score
+    this.leftGoalBack = 150;
+    this.rightGoalLine = 1170;
+    this.rightGoalBack = 1258;
+
     this.postsGroup = this.physics.add.staticGroup();
-
-    // Left Goal Posts
-    const leftTopPost = this.add.rectangle(252, 260, 16, 16, 0xffffff, 0);
-    const leftBottomPost = this.add.rectangle(252, 500, 16, 16, 0xffffff, 0);
-    this.physics.add.existing(leftTopPost, true);
-    this.physics.add.existing(leftBottomPost, true);
-    this.postsGroup.add(leftTopPost);
-    this.postsGroup.add(leftBottomPost);
-
-    // Left Goal Back net
-    const leftBackNet = this.add.rectangle(120, 380, 240, 10, 0xffffff, 0);
-    this.physics.add.existing(leftBackNet, true);
-    this.postsGroup.add(leftBackNet);
-
-    // Right Goal Posts
-    const rightTopPost = this.add.rectangle(1156, 260, 16, 16, 0xffffff, 0);
-    const rightBottomPost = this.add.rectangle(1156, 500, 16, 16, 0xffffff, 0);
-    this.physics.add.existing(rightTopPost, true);
-    this.physics.add.existing(rightBottomPost, true);
-    this.postsGroup.add(rightTopPost);
-    this.postsGroup.add(rightBottomPost);
-
-    // 3. Render cropped, correctly-scaled Goalposts (expose clean pitch while preserving nets)
-    this.leftGoal = this.add.image(126, 380, 'goalposts_left').setScale(0.38);
-    this.rightGoal = this.add.image(1282, 380, 'goalposts_right').setScale(0.38);
+    this.buildGoalColliders(this.leftGoalBack, this.leftGoalLine);
+    this.buildGoalColliders(this.rightGoalLine, this.rightGoalBack);
+    this.drawGoals();
 
     this.createPlayerAnimations();
 
@@ -111,8 +105,9 @@ export class SoccerGameScene extends Phaser.Scene {
       const p = this.physics.add.sprite(coord.x, coord.y, 'player_blue', 0);
       p.setScale(0.07); // Outfield players consistent size
       p.setCollideWorldBounds(true);
-      p.body.setSize(160, 250);
-      p.body.setOffset(96, 420);
+      // Body aligned to the visible figure (art spans y~134-651 in the frame)
+      p.body.setSize(150, 430);
+      p.body.setOffset(101, 200);
       p.setData('team', 1);
       p.setData('idx', idx);
       this.physics.add.collider(p, this.postsGroup);
@@ -131,8 +126,8 @@ export class SoccerGameScene extends Phaser.Scene {
       p.setScale(0.07);
       p.setFlipX(true);
       p.setCollideWorldBounds(true);
-      p.body.setSize(160, 250);
-      p.body.setOffset(96, 420);
+      p.body.setSize(150, 430);
+      p.body.setOffset(101, 200);
       p.setData('team', 2);
       p.setData('idx', idx);
       this.physics.add.collider(p, this.postsGroup);
@@ -152,7 +147,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
     // 6. AI Goalkeeper 1 (Left Goal)
     // Goalkeepers are consistent and slightly larger than outfield players!
-    this.gk1 = this.physics.add.sprite(165, 380, 'goalkeeper_ready_0');
+    this.gk1 = this.physics.add.sprite(242, 380, 'goalkeeper', 'goalkeeper_ready_0');
     this.gk1.setScale(0.22); // Perfectly proportional goalkeeper
     this.gk1.setCollideWorldBounds(true);
     this.gk1.body.setImmovable(true);
@@ -161,7 +156,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.gk1.body.setOffset(40, 20);
 
     // 7. AI Goalkeeper 2 (Right Goal)
-    this.gk2 = this.physics.add.sprite(1243, 380, 'goalkeeper_ready_0');
+    this.gk2 = this.physics.add.sprite(1166, 380, 'goalkeeper', 'goalkeeper_ready_0');
     this.gk2.setScale(0.22);
     this.gk2.setFlipX(true);
     this.gk2.setCollideWorldBounds(true);
@@ -180,11 +175,13 @@ export class SoccerGameScene extends Phaser.Scene {
     this.ball.setDamping(true);
     this.ball.setDrag(0.982);
     this.ball.setBounce(0.78);
-    this.ball.body.setCircle(120);
-    this.ball.body.setOffset(51, 51);
+    // The ball art is a ~170px-radius circle centred at (~702, 384) in the
+    // 1408x768 frame — centre the physics body on it so collisions and the
+    // height-offset logic in updateBallHeight() line up with the visible ball.
+    this.ball.body.setCircle(170, 532, 214);
 
-    // Bounds
-    this.physics.world.setBounds(0, 175, width, 550);
+    // Bounds — match the visible playfield (kept clear of the crowd strips)
+    this.physics.world.setBounds(0, 150, width, 540);
 
     this.physics.add.collider(this.ball, this.postsGroup, () => {
       if (this.ballZ < 40) Sound.playBounce();
@@ -262,7 +259,7 @@ export class SoccerGameScene extends Phaser.Scene {
     if (!this.gameActive) return;
 
     this.updateBallHeight();
-    this.handleAutoPlayerSwitching();
+    this.handleAutoPlayerSwitching(time);
 
     const activeP1 = this.bluePlayers[this.activeBlueIdx];
     const activeP2 = this.redPlayers[this.activeRedIdx];
@@ -304,36 +301,48 @@ export class SoccerGameScene extends Phaser.Scene {
     this.ballShadow.setAlpha(Math.max(0.1, 0.35 - this.ballZ / 400));
   }
 
-  handleAutoPlayerSwitching() {
-    let minBlueDist = Infinity;
-    let closestBlueIdx = 0;
-    this.bluePlayers.forEach((p, idx) => {
+  handleAutoPlayerSwitching(time) {
+    this.activeBlueIdx = this.resolveActivePlayer(
+      this.bluePlayers, this.activeBlueIdx, 'blue', time
+    );
+    this.activeRedIdx = this.resolveActivePlayer(
+      this.redPlayers, this.activeRedIdx, 'red', time
+    );
+  }
+
+  // Reassign control to the teammate nearest the ball, but only when that
+  // candidate is meaningfully closer than the current player AND a short
+  // cooldown has elapsed. Without this hysteresis the active index oscillates
+  // between near-equidistant players every frame, making the keys appear to
+  // drive several players at once.
+  resolveActivePlayer(team, activeIdx, key, time) {
+    const SWITCH_MARGIN = 55;   // px the candidate must beat the current by
+    const SWITCH_COOLDOWN = 280; // ms minimum between switches
+
+    let closestIdx = activeIdx;
+    let closestDist = Infinity;
+    team.forEach((p, idx) => {
       const d = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
-      if (d < minBlueDist) {
-        minBlueDist = d;
-        closestBlueIdx = idx;
+      if (d < closestDist) {
+        closestDist = d;
+        closestIdx = idx;
       }
     });
 
-    if (closestBlueIdx !== this.activeBlueIdx) {
-      this.bluePlayers[this.activeBlueIdx].setVelocity(0, 0);
-      this.activeBlueIdx = closestBlueIdx;
+    if (closestIdx === activeIdx) return activeIdx;
+
+    const lastSwitch = key === 'blue' ? this.lastBlueSwitch : this.lastRedSwitch;
+    const activeDist = Phaser.Math.Distance.Between(
+      team[activeIdx].x, team[activeIdx].y, this.ball.x, this.ball.y
+    );
+
+    if (closestDist + SWITCH_MARGIN < activeDist && time - lastSwitch > SWITCH_COOLDOWN) {
+      team[activeIdx].setVelocity(0, 0); // hand the old player back to the AI cleanly
+      if (key === 'blue') this.lastBlueSwitch = time; else this.lastRedSwitch = time;
+      return closestIdx;
     }
 
-    let minRedDist = Infinity;
-    let closestRedIdx = 0;
-    this.redPlayers.forEach((p, idx) => {
-      const d = Phaser.Math.Distance.Between(p.x, p.y, this.ball.x, this.ball.y);
-      if (d < minRedDist) {
-        minRedDist = d;
-        closestRedIdx = idx;
-      }
-    });
-
-    if (closestRedIdx !== this.activeRedIdx) {
-      this.redPlayers[this.activeRedIdx].setVelocity(0, 0);
-      this.activeRedIdx = closestRedIdx;
-    }
+    return activeIdx;
   }
 
   handlePlayer1Input(activePlayer, time) {
@@ -391,7 +400,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
     if (this.keys.up.isDown) {
       dy = -1;
-    } else if (this.keys.down.isDown && !this.keys.enter.isDown) {
+    } else if (this.keys.down.isDown) {
       dy = 1;
     }
 
@@ -655,11 +664,11 @@ export class SoccerGameScene extends Phaser.Scene {
   checkGoals() {
     if (this.isResetting) return;
 
-    if (this.ballZ < 80) {
-      if (this.ball.x < 240 && this.ball.y > 260 && this.ball.y < 500) {
+    if (this.ballZ < 80 && this.ball.y > this.goalMouthTop && this.ball.y < this.goalMouthBottom) {
+      if (this.ball.x < this.leftGoalLine) {
         this.scoreGoal(2);
       }
-      else if (this.ball.x > 1168 && this.ball.y > 260 && this.ball.y < 500) {
+      else if (this.ball.x > this.rightGoalLine) {
         this.scoreGoal(1);
       }
     }
@@ -749,8 +758,8 @@ export class SoccerGameScene extends Phaser.Scene {
     });
     this.activeRedIdx = 0;
 
-    this.gk1.setPosition(165, 380);
-    this.gk2.setPosition(1243, 380);
+    this.gk1.setPosition(242, 380);
+    this.gk2.setPosition(1166, 380);
 
     Sound.playWhistle();
     this.isResetting = false;
@@ -802,6 +811,26 @@ export class SoccerGameScene extends Phaser.Scene {
         score2: this.score2
       }
     }));
+  }
+
+  // Full reset for a rematch — re-enables physics bodies, resets score/clock
+  // and positions. Called from the DOM "REMATCH" button in main.js.
+  restartMatch() {
+    this.score1 = 0;
+    this.score2 = 0;
+    this.matchTime = 90;
+    this.scoreText1.setText('0');
+    this.scoreText2.setText('0');
+    this.timeText.setText('01:30');
+    this.isResetting = false;
+
+    this.ball.body.setEnable(true);
+    this.bluePlayers.forEach(p => p.body.setEnable(true));
+    this.redPlayers.forEach(p => p.body.setEnable(true));
+
+    this.resetPositionsAfterGoal();
+    this.startTimer();
+    this.gameActive = true;
   }
 
   setupCoaches() {
@@ -967,12 +996,117 @@ export class SoccerGameScene extends Phaser.Scene {
     });
   }
 
-  createGoalpostFrames() {
-    // Dynamically slice Left and Right goals from goalposts.png
-    // Left Goal Segment 0: X [35 to 673], Y [89 to 700] (Width: 639, Height: 612)
-    this.textures.get('goalposts').add('goalposts_left', 0, 35, 89, 639, 612);
-    
-    // Right Goal Segment 1: X [733 to 1364], Y [71 to 706] (Width: 632, Height: 636)
-    this.textures.get('goalposts').add('goalposts_right', 0, 733, 71, 632, 636);
+  createCrowdStrips() {
+    // The crowd source is 1408x768 and fully opaque. Adding full-width frames
+    // and rendering them at scale 1 shows the spectators without the vertical
+    // squish that scaling the whole image to (1, 0.22) produced.
+    const tex = this.textures.get('crowd');
+    tex.add('crowd_top', 0, 0, 0, 1408, 150);
+    tex.add('crowd_bottom', 0, 0, 250, 1408, 80);
+  }
+
+  // Build the invisible static collision walls for one goal. The mouth faces
+  // the pitch; the back and sides contain the ball once it crosses the line.
+  buildGoalColliders(backX, frontX) {
+    const top = this.goalMouthTop;
+    const bottom = this.goalMouthBottom;
+    const midX = (backX + frontX) / 2;
+    const midY = (top + bottom) / 2;
+    const sideW = Math.abs(frontX - backX);
+    const mouthH = bottom - top;
+
+    const addWall = (x, y, w, h) => {
+      const r = this.add.rectangle(x, y, w, h, 0xffffff, 0);
+      this.physics.add.existing(r, true);
+      this.postsGroup.add(r);
+    };
+
+    addWall(backX, midY, 10, mouthH);        // back net
+    addWall(midX, top, sideW, 10);           // top side net
+    addWall(midX, bottom, sideW, 10);        // bottom side net
+    addWall(frontX, top, 12, 12);            // front post (top)
+    addWall(frontX, bottom, 12, 12);         // front post (bottom)
+  }
+
+  // Draw both goals as clean top-down nets aligned to the collision walls.
+  drawGoals() {
+    // Default depth: drawn before players/ball so they appear in front of the net.
+    const g = this.add.graphics();
+    const top = this.goalMouthTop;
+    const bottom = this.goalMouthBottom;
+
+    const drawGoal = (backX, frontX) => {
+      const x0 = Math.min(backX, frontX);
+      const x1 = Math.max(backX, frontX);
+      const w = x1 - x0;
+      const h = bottom - top;
+
+      // Net fill
+      g.fillStyle(0xffffff, 0.12);
+      g.fillRect(x0, top, w, h);
+
+      // Net grid
+      g.lineStyle(1, 0xffffff, 0.35);
+      const step = 18;
+      for (let x = x0; x <= x1; x += step) {
+        g.lineBetween(x, top, x, bottom);
+      }
+      for (let y = top; y <= bottom; y += step) {
+        g.lineBetween(x0, y, x1, y);
+      }
+
+      // Posts & crossbars (thick white frame)
+      g.lineStyle(5, 0xffffff, 1);
+      g.lineBetween(frontX, top, frontX, bottom); // goal line / posts plane
+      g.lineBetween(x0, top, x1, top);            // top bar
+      g.lineBetween(x0, bottom, x1, bottom);      // bottom bar
+      g.lineBetween(backX, top, backX, bottom);   // back
+
+      // Post nubs at the mouth
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(frontX, top, 4);
+      g.fillCircle(frontX, bottom, 4);
+    };
+
+    drawGoal(this.leftGoalBack, this.leftGoalLine);
+    drawGoal(this.rightGoalBack, this.rightGoalLine);
+  }
+
+  // --- Coach commands (invoked from the DOM shout bar in main.js) ---
+  coachShoot(teamNum) {
+    const player = teamNum === 1
+      ? this.bluePlayers[this.activeBlueIdx]
+      : this.redPlayers[this.activeRedIdx];
+    const dir = teamNum === 1 ? 1 : -1;
+    this.triggerTeamKick(player, teamNum, dir, 0);
+  }
+
+  coachJump(teamNum) {
+    const player = teamNum === 1
+      ? this.bluePlayers[this.activeBlueIdx]
+      : this.redPlayers[this.activeRedIdx];
+    this.tweens.add({
+      targets: player,
+      y: player.y - 60,
+      duration: 150,
+      yoyo: true,
+      onStart: () => Sound.playJump()
+    });
+  }
+
+  coachDefend(teamNum) {
+    const player = teamNum === 1
+      ? this.bluePlayers[this.activeBlueIdx]
+      : this.redPlayers[this.activeRedIdx];
+    player.setPosition(teamNum === 1 ? 380 : 1028, player.y);
+    this.showCoachShout(teamNum, 'FALLING BACK!');
+  }
+
+  coachAttack(teamNum) {
+    const player = teamNum === 1
+      ? this.bluePlayers[this.activeBlueIdx]
+      : this.redPlayers[this.activeRedIdx];
+    player.setPosition(teamNum === 1 ? 750 : 658, player.y);
+    this.showCoachShout(teamNum, 'GOING FORWARD!');
   }
 }
