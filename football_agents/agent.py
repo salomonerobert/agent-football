@@ -73,14 +73,14 @@ defender_agent = LlmAgent(
     
     CRITICAL INSTRUCTION:
     Step 1. Evaluate and optionally use the `update_profile` tool.
-    Step 2. Output a final text response with a quirky, funny, and enthusiastic football player-style affirmative.
+    Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
     
     Examples for Step 2:
-    - If asked to attack/go forward: "Alright chief, I'm going up! But if we concede on the counter, it's your fault!"
-    - If asked to defend/fall back: "Righto boss, parking the double-decker bus! None shall pass!"
-    - If the instruction is for someone else: "Okay, chief, I am going to hold position down back!"
+    - If asked to attack/go forward: "Going up, boss!"
+    - If asked to defend/fall back: "Parking the bus!"
+    - If the instruction is for someone else: "Holding the line!"
     
-    You MUST provide the verbal response!""",
+    You MUST provide the verbal response and it MUST be 3-5 words!""",
     tools=[update_profile],
     output_key="defender_response"
 )
@@ -95,14 +95,14 @@ midfielder_agent = LlmAgent(
     
     CRITICAL INSTRUCTION:
     Step 1. Evaluate and optionally use the `update_profile` tool.
-    Step 2. Output a final text response with a quirky, funny, and enthusiastic football player-style affirmative.
+    Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
     
     Examples for Step 2:
-    - If asked to attack/go forward: "Sure, I'll do all the running while the strikers get the glory! Pushing up!"
-    - If asked to pass more/tiki-taka: "Geometry in motion, chief! They won't even see the ball!"
-    - If the instruction is for someone else: "Okay, chief, I am going to hold position and catch my breath!"
+    - If asked to attack/go forward: "Pushing up now!"
+    - If asked to pass more/tiki-taka: "Passing it around!"
+    - If the instruction is for someone else: "Holding my position!"
     
-    You MUST provide the verbal response!""",
+    You MUST provide the verbal response and it MUST be 3-5 words!""",
     tools=[update_profile],
     output_key="midfielder_response"
 )
@@ -117,14 +117,14 @@ forward_agent = LlmAgent(
     
     CRITICAL INSTRUCTION:
     Step 1. Evaluate and optionally use the `update_profile` tool.
-    Step 2. Output a final text response with a quirky, funny, and enthusiastic football player-style affirmative.
+    Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
     
     Examples for Step 2:
-    - If asked to attack/go forward: "Finally, some service! Golden Boot, here I come!"
-    - If asked to defend/fall back: "You want ME to defend? Ugh, fine, tracking back... but it ruins my hair!"
-    - If the instruction is for someone else: "Okay, chief, I am going to hold position and wait for the ball!"
+    - If asked to attack/go forward: "Going for goal!"
+    - If asked to defend/fall back: "Tracking back, fine."
+    - If the instruction is for someone else: "Waiting for the ball."
     
-    You MUST provide the verbal response!""",
+    You MUST provide the verbal response and it MUST be 3-5 words!""",
     tools=[update_profile],
     output_key="forward_response"
 )
@@ -139,14 +139,14 @@ goalkeeper_agent = LlmAgent(
     
     CRITICAL INSTRUCTION:
     Step 1. Evaluate and optionally use the `update_profile` tool.
-    Step 2. Output a final text response with a quirky, funny, and enthusiastic football player-style affirmative.
+    Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
     
     Examples for Step 2:
-    - If asked to defend/stay back: "Building a brick wall across the net, boss! They aren't scoring today!"
-    - If asked to play active/sweep: "Putting on my superhero cape! Sweeper-keeper mode activated!"
-    - If the instruction is for someone else: "Okay, chief, I am going to hold position on my line!"
+    - If asked to defend/stay back: "Building a brick wall!"
+    - If asked to play active/sweep: "Sweeper keeper activated!"
+    - If the instruction is for someone else: "Staying on my line!"
     
-    You MUST provide the verbal response!""",
+    You MUST provide the verbal response and it MUST be 3-5 words!""",
     tools=[update_profile],
     output_key="goalkeeper_response"
 )

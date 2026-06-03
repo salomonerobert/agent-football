@@ -1888,7 +1888,7 @@ export class SoccerGameScene extends Phaser.Scene {
           this.showPlayerShout(role, msg);
         });
         this.huddleTimers.push(timer);
-        delay += 3300; // 3 seconds of show time + 300ms gap
+        delay += 1000; // 1 second sequential delay
       }
     });
   }

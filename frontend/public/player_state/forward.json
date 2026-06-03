@@ -10,7 +10,7 @@
   "defensePositioning": 0.2,
   "attackPositioning": 0.85,
   "decisionDelay": 50,
-  "pressingIntensity": 0.5,
+  "pressingIntensity": 0.7,
   "formationDiscipline": 0.3,
   "passRiskTolerance": 0.4,
   "dribbleTendency": 0.5,
@@ -24,6 +24,6 @@
   "acceleration": -0.2,
   "pace": 0.9,
   "finishing": 0.98,
-  "defensiveWorkRate": 0.5,
+  "defensiveWorkRate": 0.35,
   "shortPassing": 0.85
 }
