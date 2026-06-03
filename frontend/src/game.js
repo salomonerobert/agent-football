@@ -213,7 +213,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.bluePlayers.forEach((p) => {
       const role = p.getData('role');
       const profile = defaults[role] || {};
-      const label = this.add.text(p.x, p.y - 45, `${role.toUpperCase()}\nSpd: ${Math.round(profile.speed || 210)}`, {
+      const label = this.add.text(p.x, p.y - 45, `${role.toUpperCase()}\nSpd: ${Math.round(this.getPlayerSpeed(profile, role))}`, {
         fontFamily: '"Outfit", "Inter", Arial, sans-serif',
         fontSize: '13px',
         color: '#ffffff',
@@ -399,7 +399,7 @@ export class SoccerGameScene extends Phaser.Scene {
       if (label) {
         const role = p.getData('role');
         const profile = this.blueProfiles[role];
-        label.setText(`${role.toUpperCase()}\nSpd: ${Math.round(profile.speed)}`);
+        label.setText(`${role.toUpperCase()}\nSpd: ${Math.round(this.getPlayerSpeed(profile, role))}`);
         label.setPosition(p.x, p.y - 45);
       }
 
@@ -602,6 +602,13 @@ export class SoccerGameScene extends Phaser.Scene {
     this.anims.globalTimeScale = speed;
   }
 
+  getPlayerSpeed(profile, role) {
+    const baseSpeeds = { defender: 210, midfielder: 235, forward: 260, goalkeeper: 180 };
+    const base = baseSpeeds[role] || 240;
+    if (!profile || profile.speed === undefined) return base;
+    return profile.speed <= 2.0 ? base * profile.speed : profile.speed;
+  }
+
   updateAllPlayersAI(time, delta) {
     const ballX = this.ball.x;
     const ballY = this.ball.y;
@@ -625,6 +632,7 @@ export class SoccerGameScene extends Phaser.Scene {
       players.forEach(p => {
         const role = p.getData('role');
         const profile = profiles[role] || {};
+        const baseSpeed = this.getPlayerSpeed(profile, role);
         const tState = p.getData('tackle');
 
         // 1. Skip movement if slide tackling
@@ -663,7 +671,7 @@ export class SoccerGameScene extends Phaser.Scene {
           // Move towards opponent goal
           const targetY = Phaser.Math.Clamp(ballY, 200, 568);
           const urgency = profile.counterAttackUrgency !== undefined ? profile.counterAttackUrgency : 0.5;
-          const runSpeed = (profile.speed || 240) * (1.0 + urgency * 0.15);
+          const runSpeed = baseSpeed * (1.0 + urgency * 0.15);
           this.movePlayerTowards(p, opponentGoalLine, targetY, runSpeed, teamNum);
 
           // Decision check after delay
@@ -760,7 +768,7 @@ export class SoccerGameScene extends Phaser.Scene {
           }
 
           const counterUrgency = profile.counterAttackUrgency !== undefined ? profile.counterAttackUrgency : 0.5;
-          const supportSpeed = (profile.speed || 240) * (1.0 + counterUrgency * 0.15);
+          const supportSpeed = baseSpeed * (1.0 + counterUrgency * 0.15);
           this.movePlayerTowards(p, targetX, targetY, supportSpeed, teamNum);
           return;
         }
@@ -780,7 +788,7 @@ export class SoccerGameScene extends Phaser.Scene {
         if (shouldChase && !this.throwInActive) {
           // Chase ball
           const pressSpeedFactor = 1.0 + pressing * 0.15;
-          this.movePlayerTowards(p, ballX, ballY, (profile.speed || 240) * pressSpeedFactor, teamNum);
+          this.movePlayerTowards(p, ballX, ballY, baseSpeed * pressSpeedFactor, teamNum);
 
           // Slide tackle trigger
           if (opponentHasBall && distToBall < (profile.tackleRadius || 50)) {
@@ -815,7 +823,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
           // Recovery Speed Multiplier
           const recMult = profile.recoverySpeedMultiplier !== undefined ? profile.recoverySpeedMultiplier : 1.0;
-          const recoverySpeed = (profile.speed || 240) * 0.9 * (0.8 + recMult * 0.2);
+          const recoverySpeed = baseSpeed * 0.9 * (0.8 + recMult * 0.2);
 
           this.movePlayerTowards(p, finalX, finalY, recoverySpeed, teamNum);
         }
