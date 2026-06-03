@@ -1,0 +1,123 @@
+# Worldcup Mania: Gemini-Powered Agentic Football
+
+An interactive, real-time 5v5 soccer simulation game powered by the Google Agentic Development Kit (ADK) and Gemini. Users take the role of the Coach/Manager, using natural language to shout instructions to the team. The players parse the instructions via dedicated LLM agents, dynamically update their playstyles (affecting physics and AI logic), and shout back quirky affirmations sequentially in real-time.
+
+---
+
+## 🏗️ System Architecture & Interaction Flow
+
+The application consists of a **Phaser 3 Frontend** (HTML/JS/Vite) and an **ADK Python Agent Backend** (running on FastAPI).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Coach as User (Coach)
+    participant UI as Frontend UI
+    participant Game as Phaser Game Engine
+    participant Server as Backend Agent (ADK)
+    participant Profiles as JSON Profiles (frontend/public/player_state/*.json)
+
+    Coach->>UI: Type instruction (e.g., "Everyone attack!") & click Shout
+    UI->>UI: Render Coach shout bubble ("EVERYONE ATTACK!") above coach portrait
+    UI->>Server: POST /run_sse with instruction text
+    
+    rect rgb(20, 30, 50)
+        note right of Server: ParallelAgent Orchestration
+        Server->>Server: Run agents in parallel (Defender, Midfielder, Forward, GK)
+        Server->>Profiles: Optional: Call `update_profile` tool to write new stats
+        Server->>UI: Stream SSE event-stream with player responses
+    end
+
+    UI->>Game: Trigger `scene.showTeamHuddle(huddleData)`
+    loop Sequential Player Bubbles
+        Game->>Game: Stagger player speech bubbles by 1.0s above moving sprites
+    end
+
+    loop Game loop (Every 2 seconds)
+        UI->>Profiles: Poll profile JSONs to check for changes
+        Profiles-->>UI: Return updated attributes
+        UI->>Game: Apply new profile attributes globally
+        note over Game: Real-time speed, positioning, and tackle radius physics change!
+    end
+```
+
+### 1. The Frontend UI & Phaser Game Engine
+- **Phaser 3 Game Canvas:** Renders the pitch, players, goals, and soccer ball. Handles game loops, player AI, collision detection, and score tracking.
+- **Coach Input Bar:** Standardized input box at the bottom of the screen to send custom coach shouts to the backend.
+- **Floating Speech Bubbles:** Programmatically drawn vector graphics attached to the player and coach sprites, following them dynamically in real-time.
+
+### 2. The ADK Python Backend
+- Orchestrated using the `ParallelAgent` and a root agent sequence.
+- **Specialized Agents:** Dedicated agents for the `Defender`, `Midfielder`, `Forward`, and `Goalkeeper` roles. Each agent determines whether the manager's shout is relevant to them.
+- **The `update_profile` Tool:** If relevant, the player agent calls `update_profile` to modify specific parameters (e.g. `defensePositioning`, `aggression`, `sweeperTendency`) in the JSON profile state files.
+- **Quirky Affirmations:** Each agent is instructed to respond with a quirky, football-style affirmation (strictly 3-5 words long), streamed back to the frontend via SSE (`Server-Sent Events`).
+
+---
+
+## ⚙️ Local Setup & Running Instructions
+
+### Prerequisites
+- Python 3.10+
+- Node.js (with npm)
+- Gemini API Key
+
+---
+
+### 1. Running the Backend Agent
+1. Navigate to the project root directory:
+   ```bash
+   cd agent-football
+   ```
+2. Create or update your `.env` file in the root directory:
+   ```env
+   GEMINI_API_KEY=your_actual_gemini_api_key_here
+   ```
+3. Activate the Python virtual environment:
+   ```bash
+   source venv/bin/activate
+   ```
+4. Start the ADK web server:
+   ```bash
+   adk web
+   ```
+   *The server will boot up and run on `http://127.0.0.1:8000`.*
+
+---
+
+### 2. Running the Frontend
+1. Open a new terminal session and navigate to the `frontend` directory:
+   ```bash
+   cd agent-football/frontend
+   ```
+2. Install npm dependencies (if running for the first time):
+   ```bash
+   npm install
+   ```
+3. Build the production assets:
+   ```bash
+   npm run build
+   ```
+4. Start the Vite local development server:
+   ```bash
+   npm run dev
+   ```
+   *The client application will run on `http://localhost:5173/`.*
+
+---
+
+## 📊 Player Profiles & Gameplay Effects
+
+When an agent calls the `update_profile` tool, the changes are written directly to the following files in the frontend public directory:
+- [defender.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/defender.json)
+- [midfielder.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/midfielder.json)
+- [forward.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/forward.json)
+- [goalkeeper.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/goalkeeper.json)
+
+The frontend automatically polls these files to modify variables inside the physics loop, directly altering gameplay dynamics:
+
+| Role | Affected Attributes | Gameplay Effect |
+| :--- | :--- | :--- |
+| **Defender** | `defensePositioning`<br>`attackPositioning`<br>`tackleRadius`<br>`aggression` | **Aggression:** High values make the defender sprint faster when challenging for the ball.<br>**Tackle Radius:** Larger values allow the defender to steal the ball from further away.<br>**Positioning:** Adjusts how deep the defender stays on the pitch. |
+| **Midfielder** | `supportRunFrequency`<br>`passAccuracy`<br>`attackPositioning` | **Support Run:** Higher frequency triggers midfielders to make forward runs into space.<br>**Attack Positioning:** Moves midfielders closer to the opponent's box for shots. |
+| **Forward** | `attackPositioning`<br>`defensiveWorkRate`<br>`pressingIntensity` | **Pressing Intensity:** High values make the forward actively chase down opposing defenders.<br>**Defensive Work Rate:** Determines if the forward tracks back during counterattacks. |
+| **Goalkeeper** | `sweeperTendency`<br>`stayOnLine`<br>`aggression` | **Sweeper Tendency:** High sweep tendency allows the goalkeeper to leave the penalty box to clear long balls.<br>**Stay On Line:** High stay on line forces the goalie to stay inside the goalposts to cover shots. |
