@@ -1190,20 +1190,26 @@ export class SoccerGameScene extends Phaser.Scene {
     const GOAL_LINE_L = 150;
     const GOAL_LINE_R = 1258;
 
-    const bx = this.ball.body.x + this.ball.body.halfWidth;
-    const by = this.ball.body.y + this.ball.body.halfHeight;
+    const bx = this.ball.x;
+    const by = this.ball.y;
 
     const bounceFactor = 0.78;
     let bounced = false;
 
     // Check Touchline (Top/Bottom) boundaries
     if (by < TOUCH_TOP) {
-      this.ball.body.y = TOUCH_TOP - this.ball.body.halfHeight;
-      this.ball.setVelocityY(Math.abs(this.ball.body.velocity.y) * bounceFactor);
+      const pushBack = 25 + Math.random() * 55; // 25 to 80 px
+      this.ball.y = TOUCH_TOP + pushBack;
+      const baseVel = Math.max(150, Math.abs(this.ball.body.velocity.y) * bounceFactor);
+      this.ball.setVelocityY(baseVel + Math.random() * 80);
+      this.ball.setVelocityX(this.ball.body.velocity.x * 0.8 + (Math.random() * 100 - 50));
       bounced = true;
     } else if (by > TOUCH_BOTTOM) {
-      this.ball.body.y = TOUCH_BOTTOM - this.ball.body.halfHeight;
-      this.ball.setVelocityY(-Math.abs(this.ball.body.velocity.y) * bounceFactor);
+      const pushBack = 25 + Math.random() * 55;
+      this.ball.y = TOUCH_BOTTOM - pushBack;
+      const baseVel = Math.max(150, Math.abs(this.ball.body.velocity.y) * bounceFactor);
+      this.ball.setVelocityY(-(baseVel + Math.random() * 80));
+      this.ball.setVelocityX(this.ball.body.velocity.x * 0.8 + (Math.random() * 100 - 50));
       bounced = true;
     }
 
@@ -1211,12 +1217,18 @@ export class SoccerGameScene extends Phaser.Scene {
     const insideGoalMouthY = (by > this.goalMouthTop && by < this.goalMouthBottom);
     if (!insideGoalMouthY) {
       if (bx < GOAL_LINE_L) {
-        this.ball.body.x = GOAL_LINE_L - this.ball.body.halfWidth;
-        this.ball.setVelocityX(Math.abs(this.ball.body.velocity.x) * bounceFactor);
+        const pushBack = 25 + Math.random() * 55;
+        this.ball.x = GOAL_LINE_L + pushBack;
+        const baseVel = Math.max(150, Math.abs(this.ball.body.velocity.x) * bounceFactor);
+        this.ball.setVelocityX(baseVel + Math.random() * 80);
+        this.ball.setVelocityY(this.ball.body.velocity.y * 0.8 + (Math.random() * 100 - 50));
         bounced = true;
       } else if (bx > GOAL_LINE_R) {
-        this.ball.body.x = GOAL_LINE_R - this.ball.body.halfWidth;
-        this.ball.setVelocityX(-Math.abs(this.ball.body.velocity.x) * bounceFactor);
+        const pushBack = 25 + Math.random() * 55;
+        this.ball.x = GOAL_LINE_R - pushBack;
+        const baseVel = Math.max(150, Math.abs(this.ball.body.velocity.x) * bounceFactor);
+        this.ball.setVelocityX(-(baseVel + Math.random() * 80));
+        this.ball.setVelocityY(this.ball.body.velocity.y * 0.8 + (Math.random() * 100 - 50));
         bounced = true;
       }
     }
