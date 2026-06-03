@@ -72,11 +72,16 @@ sequenceDiagram
    ```env
    GEMINI_API_KEY=your_actual_gemini_api_key_here
    ```
-3. Activate the Python virtual environment:
+3. Create and activate a Python virtual environment:
    ```bash
+   python3 -m venv venv
    source venv/bin/activate
    ```
-4. Start the ADK web server:
+4. Install the backend dependencies:
+   ```bash
+   pip install -r football_agents/requirements.txt
+   ```
+5. Start the ADK web server:
    ```bash
    adk web
    ```
