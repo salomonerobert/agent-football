@@ -1,13 +1,13 @@
 {
   "speed": 210,
-  "tackleRadius": 0.8,
+  "tackleRadius": 0.9,
   "tackleCooldown": 800,
   "passProbability": 0.75,
   "passRange": 420,
-  "shotPower": 0.6,
+  "shotPower": 0.8,
   "shotRange": 300,
-  "aggression": 0.95,
-  "defensePositioning": 0.9,
+  "aggression": 0.6,
+  "defensePositioning": 0.95,
   "attackPositioning": 0.1,
   "decisionDelay": 150,
   "pressingIntensity": 0.3,
@@ -20,5 +20,8 @@
   "interceptionRadius": 80,
   "foulProbability": 0.3,
   "counterAttackUrgency": 0.2,
-  "lineHeight": 0.25
+  "lineHeight": 0.25,
+  "clearance": 0.9,
+  "longPassing": 0.8,
+  "tackleAggression": 0.9
 }

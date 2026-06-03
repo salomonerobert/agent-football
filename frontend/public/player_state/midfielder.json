@@ -6,7 +6,7 @@
   "passRange": 500,
   "shotPower": 0.75,
   "shotRange": 500,
-  "aggression": 0.8,
+  "aggression": 0.95,
   "defensePositioning": 0.4,
   "attackPositioning": 0.1,
   "decisionDelay": 100,
@@ -15,7 +15,7 @@
   "passRiskTolerance": 0.6,
   "dribbleTendency": 0.5,
   "recoverySpeedMultiplier": 1.1,
-  "supportRunFrequency": 0.1,
+  "supportRunFrequency": 0.3,
   "widthPreference": 0.5,
   "interceptionRadius": 60,
   "foulProbability": 0.2,
@@ -29,5 +29,14 @@
   "forwardRuns": 0.8,
   "defensiveContribution": 0.9,
   "creativeFreedom": 0.1,
-  "positionalDiscipline": 0.9
+  "positionalDiscipline": 0.9,
+  "shooting": 0.8,
+  "clearanceFrequency": 0.8,
+  "longPassProbability": 0.85,
+  "interceptionFrequency": 0.85,
+  "defensiveCoverage": 0.95,
+  "foulFrequency": 0.9,
+  "tackleIntensity": 0.9,
+  "dropDeepPreference": 0.8,
+  "defensiveSupport": 0.9
 }

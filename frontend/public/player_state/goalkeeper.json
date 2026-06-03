@@ -6,7 +6,7 @@
   "passRange": 600,
   "shotPower": 0.5,
   "shotRange": 200,
-  "aggression": 0.2,
+  "aggression": 0.1,
   "defensePositioning": 1.0,
   "attackPositioning": 0.0,
   "decisionDelay": 200,
@@ -23,7 +23,7 @@
   "foulProbability": 0.05,
   "counterAttackUrgency": 0.4,
   "positioning": 0.9,
-  "rushOut": 0.95,
+  "rushOut": 0.1,
   "stayOnLine": 0.9,
   "sweepAggression": 0.95,
   "linePositioning": 0.2,
@@ -31,5 +31,9 @@
   "distributionAccuracy": 0.8,
   "sweepingAggression": 0.8,
   "runOutChance": 0.8,
-  "discipline": 0.9
+  "discipline": 0.9,
+  "joinAttack": 0.7,
+  "clearance": 0.9,
+  "kickLength": 0.9,
+  "sweeperKeeper": 0.1
 }

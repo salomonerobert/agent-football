@@ -4,13 +4,13 @@
   "tackleCooldown": 1200,
   "passProbability": 0.3,
   "passRange": 380,
-  "shotPower": 1,
+  "shotPower": 0.95,
   "shotRange": 700,
-  "aggression": 0.9,
+  "aggression": 0.99,
   "defensePositioning": 0.2,
-  "attackPositioning": 0.85,
+  "attackPositioning": 0.4,
   "decisionDelay": 50,
-  "pressingIntensity": 0.7,
+  "pressingIntensity": 0.8,
   "formationDiscipline": 0.3,
   "passRiskTolerance": 0.4,
   "dribbleTendency": 0.5,
@@ -25,5 +25,6 @@
   "pace": 0.9,
   "finishing": 0.98,
   "defensiveWorkRate": 0.35,
-  "shortPassing": 0.85
+  "shortPassing": 0.85,
+  "defensiveContribution": 0.8
 }

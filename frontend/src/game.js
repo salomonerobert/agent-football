@@ -215,7 +215,7 @@ export class SoccerGameScene extends Phaser.Scene {
       const profile = defaults[role] || {};
       const label = this.add.text(p.x, p.y - 45, `${role.toUpperCase()}\nSpd: ${Math.round(profile.speed || 210)}`, {
         fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-        fontSize: '10px',
+        fontSize: '13px',
         color: '#ffffff',
         align: 'center',
         stroke: '#000000',
@@ -227,7 +227,7 @@ export class SoccerGameScene extends Phaser.Scene {
       p.setData('shoutGraphics', this.add.graphics().setAlpha(0));
       p.setData('shoutText', this.add.text(p.x, p.y - 75, '', {
         fontFamily: 'monospace',
-        fontSize: '9px',
+        fontSize: '12px',
         color: '#000000',
         fontStyle: 'bold',
         align: 'center'
@@ -237,7 +237,7 @@ export class SoccerGameScene extends Phaser.Scene {
     const gkProfile = defaults.goalkeeper || {};
     const gkLabel = this.add.text(this.gk1.x, this.gk1.y - 45, `GK\nTrk: ${parseFloat(gkProfile.trackingSpeed || 0.08).toFixed(2)}`, {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-      fontSize: '10px',
+      fontSize: '13px',
       color: '#ffffff',
       align: 'center',
       stroke: '#000000',
@@ -249,7 +249,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.gk1.setData('shoutGraphics', this.add.graphics().setAlpha(0));
     this.gk1.setData('shoutText', this.add.text(this.gk1.x, this.gk1.y - 75, '', {
       fontFamily: 'monospace',
-      fontSize: '9px',
+      fontSize: '12px',
       color: '#000000',
       fontStyle: 'bold',
       align: 'center'
@@ -259,7 +259,7 @@ export class SoccerGameScene extends Phaser.Scene {
       const role = p.getData('role');
       const label = this.add.text(p.x, p.y - 45, `RED ${role.toUpperCase()}`, {
         fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-        fontSize: '10px',
+        fontSize: '13px',
         color: '#f87171',
         align: 'center',
         stroke: '#000000',
@@ -270,7 +270,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
     const gk2Label = this.add.text(this.gk2.x, this.gk2.y - 45, `RED GK`, {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-      fontSize: '10px',
+      fontSize: '13px',
       color: '#f87171',
       align: 'center',
       stroke: '#000000',
@@ -1452,7 +1452,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.shoutGraphics1 = this.add.graphics().setAlpha(0);
     this.shoutText1 = this.add.text(160, 668, '', {
       fontFamily: 'monospace',
-      fontSize: '9px',
+      fontSize: '13px',
       color: '#000000',
       fontStyle: 'bold'
     }).setOrigin(0.5).setAlpha(0);
@@ -1461,7 +1461,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.shoutGraphics2 = this.add.graphics().setAlpha(0);
     this.shoutText2 = this.add.text(1248, 668, '', {
       fontFamily: 'monospace',
-      fontSize: '9px',
+      fontSize: '13px',
       color: '#000000',
       fontStyle: 'bold'
     }).setOrigin(0.5).setAlpha(0);
