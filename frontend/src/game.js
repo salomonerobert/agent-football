@@ -91,10 +91,10 @@ export class SoccerGameScene extends Phaser.Scene {
     //    the goal-line scoring test in checkGoals().
     this.goalMouthTop = 262;
     this.goalMouthBottom = 498;
-    this.leftGoalLine = 238;   // ball crosses this (moving left) to score
-    this.leftGoalBack = 150;
-    this.rightGoalLine = 1170;
-    this.rightGoalBack = 1258;
+    this.leftGoalLine = 150;   // ball crosses this (moving left) to score
+    this.leftGoalBack = 70;
+    this.rightGoalLine = 1258;
+    this.rightGoalBack = 1338;
 
     this.postsGroup = this.physics.add.staticGroup();
     this.buildGoalColliders(this.leftGoalBack, this.leftGoalLine);
@@ -180,7 +180,7 @@ export class SoccerGameScene extends Phaser.Scene {
     }
 
     // 6. AI Goalkeeper 1 (Left Goal)
-    this.gk1 = this.physics.add.sprite(242, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk1 = this.physics.add.sprite(180, 380, 'goalkeeper', 'goalkeeper_ready_0');
     this.gk1.setScale(0.22);
     this.gk1.setCollideWorldBounds(true);
     this.gk1.body.setImmovable(true);
@@ -191,7 +191,7 @@ export class SoccerGameScene extends Phaser.Scene {
     this.gk1.setData('role', 'goalkeeper');
 
     // 7. AI Goalkeeper 2 (Right Goal)
-    this.gk2 = this.physics.add.sprite(1166, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk2 = this.physics.add.sprite(1228, 380, 'goalkeeper', 'goalkeeper_ready_0');
     this.gk2.setScale(0.22);
     this.gk2.setFlipX(true);
     this.gk2.setCollideWorldBounds(true);
@@ -1178,7 +1178,7 @@ export class SoccerGameScene extends Phaser.Scene {
     const ballY = this.ball.y;
     
     const isBlue = teamNum === 1;
-    const defaultX = isBlue ? 242 : 1166;
+    const defaultX = isBlue ? 180 : 1228;
     const defendingArea = isBlue ? ballX < 450 : ballX > 958;
 
     // Calculate X coordinate movement based on attackPositioning attribute
@@ -1461,8 +1461,8 @@ export class SoccerGameScene extends Phaser.Scene {
     });
     this.activeRedIdx = 0;
 
-    this.gk1.setPosition(242, 380);
-    this.gk2.setPosition(1166, 380);
+    this.gk1.setPosition(180, 380);
+    this.gk2.setPosition(1228, 380);
 
     Sound.playWhistle();
     this.isResetting = false;
