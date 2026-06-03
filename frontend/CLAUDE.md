@@ -12,7 +12,7 @@ There is no test suite, linter, or formatter configured. Verification is done by
 
 ## Overview
 
-A retro, local 2-player arcade soccer game ("SUPER SOCCER DUEL") built with **Phaser 4** (Arcade physics) and bundled with **Vite**. Two players share one keyboard for a timed 5-a-side match. Despite the repo name (`agent-football`) and package name (`soccer-game`), there is no AI/LLM component — "agent" behavior refers to in-game AI for teammates and goalkeepers.
+A retro, local 2-player arcade soccer game ("Worldcup Mania") built with **Phaser 4** (Arcade physics) and bundled with **Vite**. Two players share one keyboard for a timed 5-a-side match. Despite the repo name (`agent-football`) and package name (`soccer-game`), there is no AI/LLM component — "agent" behavior refers to in-game AI for teammates and goalkeepers.
 
 ## Architecture
 
