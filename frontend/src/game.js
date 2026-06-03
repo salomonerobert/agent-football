@@ -1799,19 +1799,32 @@ export class SoccerGameScene extends Phaser.Scene {
     const top = this.goalMouthTop;
     const bottom = this.goalMouthBottom;
 
-    const drawGoal = (backX, frontX) => {
+    const drawGoal = (backX, frontX, isLeftTeam) => {
       const x0 = Math.min(backX, frontX);
       const x1 = Math.max(backX, frontX);
       const w = x1 - x0;
       const h = bottom - top;
 
-      // Net fill
-      g.fillStyle(0xffffff, 0.12);
+      const teamColor = isLeftTeam ? 0x3b82f6 : 0xef4444;
+
+      // 1. Goal Net/Structure Shadow (cast onto grass)
+      g.fillStyle(0x022c22, 0.45); // Dark forest green/black shadow
+      g.fillRect(x0 + 8, top + 8, w, h);
+
+      // 2. Net Backing Depth (gradient-like fill)
+      g.fillStyle(0xffffff, 0.04);
       g.fillRect(x0, top, w, h);
 
-      // Net grid
-      g.lineStyle(1, 0xffffff, 0.35);
-      const step = 18;
+      // 3. Diagonal Support Tension Poles (extending back to hold net)
+      g.lineStyle(3, 0x1e293b, 0.85); // Slate 800
+      // Draw top support pole
+      g.lineBetween(frontX, top, backX, top + 20);
+      // Draw bottom support pole
+      g.lineBetween(frontX, bottom, backX, bottom - 20);
+
+      // 4. Net Grid (fine nylon mesh)
+      g.lineStyle(1.2, 0xe2e8f0, 0.28); // Soft greyish white
+      const step = 14;
       for (let x = x0; x <= x1; x += step) {
         g.lineBetween(x, top, x, bottom);
       }
@@ -1819,21 +1832,40 @@ export class SoccerGameScene extends Phaser.Scene {
         g.lineBetween(x0, y, x1, y);
       }
 
-      // Posts & crossbars (thick white frame)
-      g.lineStyle(5, 0xffffff, 1);
-      g.lineBetween(frontX, top, frontX, bottom); // goal line / posts plane
-      g.lineBetween(x0, top, x1, top);            // top bar
-      g.lineBetween(x0, bottom, x1, bottom);      // bottom bar
-      g.lineBetween(backX, top, backX, bottom);   // back
+      // 5. Team-colored Net Base/Tension Frames
+      g.lineStyle(3.5, teamColor, 0.85);
+      g.lineBetween(backX, top, backX, bottom); // Net back line
+      g.lineBetween(x0, top, x1, top);          // Top net border
+      g.lineBetween(x0, bottom, x1, bottom);    // Bottom net border
 
-      // Post nubs at the mouth
+      // 6. Upright Front Posts (rendered with 3D gloss/depth)
+      // Goal line plane (Front Crossbar)
+      g.lineStyle(6, 0xffffff, 1);
+      g.lineBetween(frontX, top, frontX, bottom);
+
+      // Shadow overlay on the front crossbar to give it cylindrical shape
+      g.lineStyle(1.5, 0xd1d5db, 0.8);
+      g.lineBetween(frontX + 1.5, top, frontX + 1.5, bottom);
+
+      // Post 1 (Top Corner Post)
+      g.fillStyle(0x000000, 0.25);
+      g.fillCircle(frontX + 2, top + 2, 8); // Shadow
       g.fillStyle(0xffffff, 1);
-      g.fillCircle(frontX, top, 4);
-      g.fillCircle(frontX, bottom, 4);
+      g.fillCircle(frontX, top, 6);         // Base
+      g.fillStyle(0xe2e8f0, 1);
+      g.fillCircle(frontX - 1, top - 1, 4.5); // Inner highlight
+
+      // Post 2 (Bottom Corner Post)
+      g.fillStyle(0x000000, 0.25);
+      g.fillCircle(frontX + 2, bottom + 2, 8); // Shadow
+      g.fillStyle(0xffffff, 1);
+      g.fillCircle(frontX, bottom, 6);         // Base
+      g.fillStyle(0xe2e8f0, 1);
+      g.fillCircle(frontX - 1, bottom - 1, 4.5); // Inner highlight
     };
 
-    drawGoal(this.leftGoalBack, this.leftGoalLine);
-    drawGoal(this.rightGoalBack, this.rightGoalLine);
+    drawGoal(this.leftGoalBack, this.leftGoalLine, true);
+    drawGoal(this.rightGoalBack, this.rightGoalLine, false);
   }
 
   // --- Coach commands (invoked from the DOM shout bar in main.js) ---
