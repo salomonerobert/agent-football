@@ -137,4 +137,4 @@ cython_debug/
 ehthumbs.db
 Thumbs.db
 
-.adk
+*.adk

@@ -12,7 +12,7 @@ document.querySelector('#app').innerHTML = `
     <!-- Title Header -->
     <header class="game-header">
       <h1 class="neon-text">Worldcup Mania</h1>
-      <p class="sub-title">Retro AI Simulation & Coach Sandbox</p>
+      <p class="sub-title">Gemini-powered Agentic Football</p>
     </header>
 
     <!-- Simulation Speed Control -->
