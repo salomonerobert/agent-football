@@ -669,7 +669,15 @@ export class SoccerGameScene extends Phaser.Scene {
           }
 
           // Move towards opponent goal
-          const targetY = Phaser.Math.Clamp(ballY, 200, 568);
+          let targetY = ballY;
+          // If wide, cut inside towards the center of the pitch (380) to avoid getting stuck in corners
+          if (ballY < 280) {
+            targetY = ballY + (280 - ballY) * 0.45;
+          } else if (ballY > 480) {
+            targetY = ballY - (ballY - 480) * 0.45;
+          }
+          targetY = Phaser.Math.Clamp(targetY, 200, 568);
+
           const urgency = profile.counterAttackUrgency !== undefined ? profile.counterAttackUrgency : 0.5;
           const runSpeed = baseSpeed * (1.0 + urgency * 0.15);
           this.movePlayerTowards(p, opponentGoalLine, targetY, runSpeed, teamNum);
@@ -678,9 +686,25 @@ export class SoccerGameScene extends Phaser.Scene {
           if (time - p.getData('possessionStart') >= (profile.decisionDelay || 100)) {
             const distToGoal = Math.abs(opponentGoalLine - p.x);
             
-            // Dribble tendency check
+            const teammates = isBlue ? this.bluePlayers : this.redPlayers;
+            const opponents = isBlue ? this.redPlayers : this.bluePlayers;
+
+            // Check if player is pressed by an opponent
+            let closestOpponentDist = Infinity;
+            opponents.forEach(opp => {
+              const d = Phaser.Math.Distance.Between(p.x, p.y, opp.x, opp.y);
+              if (d < closestOpponentDist) closestOpponentDist = d;
+            });
+            const isPressed = closestOpponentDist < 120;
+            const isInOwnHalf = (isBlue && p.x < 700) || (!isBlue && p.x > 700);
+
+            // Dribble tendency check: reduce dribble probability if pressed or in own half
             const dribbleTend = profile.dribbleTendency !== undefined ? profile.dribbleTendency : 0.5;
-            const preferDribble = Math.random() < dribbleTend;
+            let adjustedDribbleTend = dribbleTend;
+            if (isPressed) adjustedDribbleTend *= 0.35;
+            if (isInOwnHalf) adjustedDribbleTend *= 0.45;
+            
+            const preferDribble = Math.random() < adjustedDribbleTend;
 
             // 1. Shoot check
             if (distToGoal < (profile.shotRange || 500) && ((isBlue && p.x > 700) || (!isBlue && p.x < 700))) {
@@ -706,9 +730,6 @@ export class SoccerGameScene extends Phaser.Scene {
 
             // 2. Pass check
             if (!preferDribble) {
-              const teammates = isBlue ? this.bluePlayers : this.redPlayers;
-              const opponents = isBlue ? this.redPlayers : this.bluePlayers;
-              
               let passTarget = this.findTeammateInDirection(p, teammates, directionFactor, 0);
               
               // Validate if lane is clear of defenders
@@ -870,7 +891,7 @@ export class SoccerGameScene extends Phaser.Scene {
 
   findOpenTeammate(player, teammates, passRange) {
     let bestTarget = null;
-    let minOpponentDist = -Infinity;
+    let bestScore = -Infinity;
     const opponents = player.getData('team') === 1 ? this.redPlayers : this.bluePlayers;
 
     const teamNum = player.getData('team');
@@ -893,11 +914,15 @@ export class SoccerGameScene extends Phaser.Scene {
         if (d < closestOppDist) closestOppDist = d;
       });
 
-      const isAhead = teamNum === 1 ? (mate.x > player.x - 20) : (mate.x < player.x + 20);
+      const directionFactor = teamNum === 1 ? 1 : -1;
+      const progressX = (mate.x - player.x) * directionFactor;
 
-      if (isAhead && closestOppDist > 65) {
-        if (closestOppDist > minOpponentDist) {
-          minOpponentDist = closestOppDist;
+      // A pass target is valid if they are relatively open.
+      if (closestOppDist > 55) {
+        // Score: favor open players, and apply a small bonus if they are forward of the passer
+        const score = closestOppDist + progressX * 0.25;
+        if (score > bestScore) {
+          bestScore = score;
           bestTarget = mate;
         }
       }
