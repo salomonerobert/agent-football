@@ -113,10 +113,10 @@ sequenceDiagram
 ## 📊 Player Profiles & Gameplay Effects
 
 When an agent calls the `update_profile` tool, the changes are written directly to the following files in the frontend public directory:
-- [defender.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/defender.json)
-- [midfielder.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/midfielder.json)
-- [forward.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/forward.json)
-- [goalkeeper.json](file:///Users/aishprabhat/Documents/repos/agent-football/frontend/public/player_state/goalkeeper.json)
+- [defender.json](frontend/public/player_state/defender.json)
+- [midfielder.json](frontend/public/player_state/midfielder.json)
+- [forward.json](frontend/public/player_state/forward.json)
+- [goalkeeper.json](frontend/public/player_state/goalkeeper.json)
 
 The frontend automatically polls these files to modify variables inside the physics loop, directly altering gameplay dynamics:
 
@@ -126,3 +126,84 @@ The frontend automatically polls these files to modify variables inside the phys
 | **Midfielder** | `supportRunFrequency`<br>`passAccuracy`<br>`attackPositioning` | **Support Run:** Higher frequency triggers midfielders to make forward runs into space.<br>**Attack Positioning:** Moves midfielders closer to the opponent's box for shots. |
 | **Forward** | `attackPositioning`<br>`defensiveWorkRate`<br>`pressingIntensity` | **Pressing Intensity:** High values make the forward actively chase down opposing defenders.<br>**Defensive Work Rate:** Determines if the forward tracks back during counterattacks. |
 | **Goalkeeper** | `sweeperTendency`<br>`stayOnLine`<br>`aggression` | **Sweeper Tendency:** High sweep tendency allows the goalkeeper to leave the penalty box to clear long balls.<br>**Stay On Line:** High stay on line forces the goalie to stay inside the goalposts to cover shots. |
+
+---
+
+## 🤖 Game & Player Finite State Machines (FSM)
+
+### 1. Overall Gameplay FSM
+The gameplay progresses through several global states managed by `game.js`:
+
+```mermaid
+stateDiagram-v2
+    [*] --> KickOff : Game Start
+    KickOff --> ActivePlay : Whistle Blows / Timer Starts
+    ActivePlay --> GoalScored : Ball crosses Goal Line
+    GoalScored --> Resetting : Play stops / Display Goal text
+    Resetting --> KickOff : Reset positions / 2s delay
+    ActivePlay --> GameOver : Match Clock hits 00:00
+    GameOver --> Rematch : Press Rematch Button
+    Rematch --> KickOff : Reset score / Restart clock
+```
+
+---
+
+### 2. Outfield Player AI FSM
+Outfield players (Defenders, Midfielders, Forwards) switch states based on team possession and proximity to the ball:
+
+```mermaid
+stateDiagram-v2
+    state "Possession (Has Ball)" as HasBall
+    state "Attacking Support (Off-Ball)" as Support
+    state "Chasing / Pressing (Defending)" as Chase
+    state "Retreating / Defending Zone" as Retreat
+
+    [*] --> Retreat : Spawn
+
+    %% Transitions
+    Retreat --> Chase : Ball is loose OR Opponent has ball AND nearest to ball / press trigger
+    Chase --> Retreat : Ball is far away AND not nearest/pressing
+    
+    Chase --> HasBall : Steal ball / Tackle successful
+    Retreat --> Support : Teammate gains ball
+    Chase --> Support : Teammate gains ball
+    
+    Support --> HasBall : Intercepts pass / Receives pass
+    Support --> Retreat : Opponent gains ball / Ball loose
+    
+    HasBall --> Retreat : Passes ball / Shoots / Tackled
+```
+
+#### Detailed Outfield State Logic:
+*   **Possession (Has Ball):** Runs towards the opponent's goal. After a `decisionDelay` (e.g. `100ms`), evaluates whether to shoot (if in `shotRange`), pass to a teammate (based on `passProbability` and `passRiskTolerance`), or continue dribbling.
+*   **Attacking Support:** Positions forward to support the ball possessor based on `attackPositioning` and `supportRunFrequency`, moving wide or narrow based on `widthPreference`.
+*   **Chasing/Pressing:** Sprints directly towards the ball. If within `tackleRadius` of an opponent possessing the ball, initiates a slide tackle (cooldown and foul risk applied).
+*   **Retreating:** Returns back to zone coordinates, blending default positioning coordinates with ball coordinates using `formationDiscipline` and `defensePositioning`.
+
+---
+
+### 3. Goalkeeper FSM
+The goalkeeper's AI uses a specialized state machine to protect the net:
+
+```mermaid
+stateDiagram-v2
+    state "Line Tracking" as Track
+    state "Sweeping Forward" as Sweep
+    state "Diving Block" as Dive
+
+    [*] --> Track : Spawn
+
+    Track --> Sweep : Ball moves far into opponent half AND high `sweeperTendency`
+    Sweep --> Track : Ball returns to defending half
+
+    Track --> Dive : Ball is shot / close to goal AND height is correct
+    Sweep --> Dive : Ball is shot / close to goal
+    
+    Dive --> Track : Animation ends / Block successful
+```
+
+#### Detailed Goalkeeper State Logic:
+*   **Line Tracking:** Moves laterally along the goal line (Y range: 280 to 480) matching the ball's Y position to stay centered.
+*   **Sweeping Forward:** Moves forward on the X-axis out of the box when the ball is far away, clearing long balls (scaled by `sweeperTendency` and `attackPositioning`).
+*   **Diving Block:** Triggers a fast leaping dive if the ball comes inside the box and is offset from the goalkeeper's Y position (trigger rate scaled by `diveChance`).
+
