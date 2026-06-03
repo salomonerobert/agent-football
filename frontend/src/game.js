@@ -311,26 +311,70 @@ export class SoccerGameScene extends Phaser.Scene {
     // 10. Ad Boards
     this.adBoard = this.add.image(width / 2, 715, 'ad_board').setScale(0.22);
 
-    // 11. Scoreboard
-    this.scoreboard = this.add.image(width / 2, 70, 'scoreboard').setScale(0.35);
+    // 11. Scoreboard (Vector-based modern layout)
+    const sbWidth = 420;
+    const sbHeight = 64;
+    const sbX = width / 2 - sbWidth / 2;
+    const sbY = 30;
 
-    this.scoreText1 = this.add.text(width / 2 - 78, 62, '0', {
+    const sbGfx = this.add.graphics();
+    // Glassmorphism background
+    sbGfx.fillStyle(0x0f172a, 0.85);
+    sbGfx.fillRoundedRect(sbX, sbY, sbWidth, sbHeight, 10);
+    // Sleek border
+    sbGfx.lineStyle(1.5, 0x334155, 0.8);
+    sbGfx.strokeRoundedRect(sbX, sbY, sbWidth, sbHeight, 10);
+
+    // Section dividers
+    sbGfx.lineStyle(1, 0x475569, 0.4);
+    // Left divider
+    sbGfx.beginPath();
+    sbGfx.moveTo(width / 2 - 90, sbY + 10);
+    sbGfx.lineTo(width / 2 - 90, sbY + sbHeight - 10);
+    sbGfx.strokePath();
+
+    // Right divider
+    sbGfx.beginPath();
+    sbGfx.moveTo(width / 2 + 90, sbY + 10);
+    sbGfx.lineTo(width / 2 + 90, sbY + sbHeight - 10);
+    sbGfx.strokePath();
+
+    // Blue Team Name
+    this.add.text(width / 2 - 145, sbY + sbHeight / 2, 'BLUE', {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-      fontSize: '32px',
+      fontSize: '15px',
+      color: '#60a5fa', // Premium light blue
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Blue Score
+    this.scoreText1 = this.add.text(width / 2 - 110, sbY + sbHeight / 2, '0', {
+      fontFamily: '"Outfit", "Inter", Arial, sans-serif',
+      fontSize: '26px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.scoreText2 = this.add.text(width / 2 + 78, 62, '0', {
+    // Red Score
+    this.scoreText2 = this.add.text(width / 2 + 110, sbY + sbHeight / 2, '0', {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-      fontSize: '32px',
+      fontSize: '26px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.timeText = this.add.text(width / 2, 100, '01:30', {
+    // Red Team Name
+    this.add.text(width / 2 + 145, sbY + sbHeight / 2, 'RED', {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '15px',
+      color: '#f87171', // Premium light red
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    // Timer
+    this.timeText = this.add.text(width / 2, sbY + sbHeight / 2, '01:30', {
+      fontFamily: '"Outfit", "Inter", Arial, sans-serif',
+      fontSize: '22px',
       color: '#ffcc00',
       fontStyle: 'bold'
     }).setOrigin(0.5);
