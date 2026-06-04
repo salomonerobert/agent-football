@@ -775,3 +775,51 @@ body {
 .debug-from { color: var(--text-muted); }
 .debug-arrow { color: var(--gold-accent); }
 .debug-to { color: #fff; font-weight: 700; }
+
+/* ---- Player condition toasts (top-right): injuries & substitution requests ---- */
+#notification-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 340px;
+  pointer-events: none;
+}
+
+.pitch-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(11, 13, 23, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left-width: 4px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  line-height: 1.3;
+  backdrop-filter: blur(4px);
+  animation: toast-in 0.28s ease-out;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.pitch-toast.toast-sub { border-left-color: var(--gold-accent); }
+.pitch-toast.toast-injury { border-left-color: var(--red-primary); }
+
+.pitch-toast .toast-icon { font-size: 1.25rem; flex: 0 0 auto; }
+.pitch-toast .toast-text strong { color: #fff; }
+.pitch-toast .toast-reason { color: var(--text-muted); }
+
+.pitch-toast.toast-hide {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

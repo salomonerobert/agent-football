@@ -1,6 +1,12 @@
 # Worldcup Mania: Gemini-Powered Agentic Football
 
-An interactive, real-time 5v5 soccer simulation game powered by the Google Agentic Development Kit (ADK) and Gemini. Users take the role of the Coach/Manager, using natural language to shout instructions to the team. The players parse the instructions via dedicated LLM agents, dynamically update their playstyles (affecting physics and AI logic), and shout back quirky affirmations sequentially in real-time.
+An interactive, real-time 5v5 soccer simulation game powered by the Google Agentic Development Kit (ADK) and Gemini. Users take the role of the Coach/Manager, using natural language to shout instructions to the team. The instruction flows through a small **agent hierarchy** — the **Coach** relays it over the **A2A protocol** to a **Team Captain**, who delegates to the individual **player agents**. Players parse the instructions, dynamically update their playstyles (affecting physics and AI logic), and shout back quirky affirmations sequentially in real-time.
+
+Players can also report on their own condition: each player agent has an **MCP tool** to **report an injury** or **request a substitution** when too tired. These surface as notification toasts in the top-right of the screen (notification-only for now — no roster change).
+
+### Protocols at a glance
+- **A2A (Agent-to-Agent):** the Coach agent (served by `adk web`) reaches the Team Captain, which runs as a standalone A2A service (`football_agents/captain_server.py`, port `8001`), via `RemoteA2aAgent`.
+- **MCP (Model Context Protocol):** the player agents connect (over stdio) to `football_agents/football_mcp_server.py`, which exposes `report_injury` and `request_substitution`. Calls are written to `frontend/public/player_state/substitutions.json`, which the frontend polls.
 
 ---
 
@@ -14,30 +20,32 @@ sequenceDiagram
     actor Coach as User (Coach)
     participant UI as Frontend UI
     participant Game as Phaser Game Engine
-    participant Server as Backend Agent (ADK)
-    participant Profiles as JSON Profiles (frontend/public/player_state/*.json)
+    participant CoachA as Coach Agent (adk web :8000)
+    participant Cap as Team Captain (A2A :8001)
+    participant Players as Player Agents (Def/Mid/Fwd/GK)
+    participant MCP as Football MCP Server
+    participant Profiles as JSON state (player_state/*.json, substitutions.json)
 
     Coach->>UI: Type instruction (e.g., "Everyone attack!") & click Shout
-    UI->>UI: Render Coach shout bubble ("EVERYONE ATTACK!") above coach portrait
-    UI->>Server: POST /run_sse with instruction text
-    
+    UI->>UI: Render Coach shout bubble above coach portrait
+    UI->>CoachA: POST /run_sse with instruction + fitness report
+
     rect rgb(20, 30, 50)
-        note right of Server: ParallelAgent Orchestration
-        Server->>Server: Run agents in parallel (Defender, Midfielder, Forward, GK)
-        Server->>Profiles: Optional: Call `update_profile` tool to write new stats
-        Server->>UI: Stream SSE event-stream with player responses
+        note right of CoachA: Coach relays over A2A
+        CoachA->>Cap: A2A: forward directive + condition notes
+        Cap->>Players: Delegate via AgentTool to each relevant player
+        Players->>Profiles: Call `update_profile` to write new stats
+        Players->>MCP: If too tired/hurt: report_injury / request_substitution
+        MCP->>Profiles: Write substitutions.json
+        Cap-->>CoachA: Huddle JSON (player affirmations)
+        CoachA-->>UI: Stream SSE with huddle JSON
     end
 
     UI->>Game: Trigger `scene.showTeamHuddle(huddleData)`
-    loop Sequential Player Bubbles
-        Game->>Game: Stagger player speech bubbles by 1.0s above moving sprites
-    end
-
     loop Game loop (Every 2 seconds)
-        UI->>Profiles: Poll profile JSONs to check for changes
-        Profiles-->>UI: Return updated attributes
-        UI->>Game: Apply new profile attributes globally
-        note over Game: Real-time speed, positioning, and tackle radius physics change!
+        UI->>Profiles: Poll profile JSONs + substitutions.json
+        Profiles-->>UI: Updated attributes / condition events
+        UI->>Game: Apply new attributes; toast injuries/sub requests (top-right)
     end
 ```
 
@@ -47,9 +55,11 @@ sequenceDiagram
 - **Floating Speech Bubbles:** Programmatically drawn vector graphics attached to the player and coach sprites, following them dynamically in real-time.
 
 ### 2. The ADK Python Backend
-- Orchestrated using the `ParallelAgent` and a root agent sequence.
-- **Specialized Agents:** Dedicated agents for the `Defender`, `Midfielder`, `Forward`, and `Goalkeeper` roles. Each agent determines whether the manager's shout is relevant to them.
-- **The `update_profile` Tool:** If relevant, the player agent calls `update_profile` to modify specific parameters (e.g. `defensePositioning`, `aggression`, `sweeperTendency`) in the JSON profile state files.
+- **Coach agent (`root_agent`, served by `adk web`):** the entrypoint the frontend talks to via `/run_sse`. It relays the coach's shout to the Team Captain over **A2A** and returns the captain's huddle JSON unchanged.
+- **Team Captain (`captain_server.py`, A2A service on `:8001`):** receives the directive and *delegates* to the player agents (each wired in as an `AgentTool`), then synthesises the final huddle JSON.
+- **Specialized player agents:** dedicated agents for the `Defender`, `Midfielder`, `Forward`, and `Goalkeeper` roles. Each determines whether the captain's relayed instruction is relevant to them.
+- **The `update_profile` Tool:** If relevant, the player agent calls `update_profile` to modify specific parameters (e.g. `defensePositioning`, `aggression`, `attackPositioning`) in the JSON profile state files.
+- **MCP condition tools:** each player agent also connects to the Football MCP server and can call `report_injury` / `request_substitution` based on the fitness note relayed by the captain.
 - **Quirky Affirmations:** Each agent is instructed to respond with a quirky, football-style affirmation (strictly 3-5 words long), streamed back to the frontend via SSE (`Server-Sent Events`).
 
 ---
@@ -81,11 +91,21 @@ sequenceDiagram
    ```bash
    pip install -r football_agents/requirements.txt
    ```
-5. Start the ADK web server:
+5. Start the **Team Captain A2A service** (in its own terminal, with the venv active). It must be up
+   *before* `adk web` so the Coach agent can resolve the captain's agent card:
+   ```bash
+   python football_agents/captain_server.py
+   ```
+   *Serves on `http://localhost:8001`; the agent card is at `http://localhost:8001/.well-known/agent-card.json`.*
+6. Start the ADK web server (the **Coach** entrypoint) in another terminal:
    ```bash
    adk web
    ```
    *The server will boot up and run on `http://127.0.0.1:8000`.*
+
+> **Three processes total:** (1) the Captain A2A service on `:8001`, (2) `adk web` (Coach) on `:8000`,
+> and (3) the Vite frontend (below). The Captain spawns the MCP server (`football_mcp_server.py`)
+> on demand over stdio — you do not start it yourself.
 
 ---
 

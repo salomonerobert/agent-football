@@ -312,8 +312,15 @@ const shoutBtn = document.getElementById('shout-send-btn');
 
 let currentSessionId = null;
 
-async function sendInstructionToAgent(msg) {
+async function sendInstructionToAgent(msg, options = {}) {
+  const { showHuddle = true } = options;
   try {
+    // Attach a short fitness/tiredness report so the captain can relay condition
+    // notes to players (who may then request a substitution / report an injury
+    // via their MCP tools). Kept lightweight: derived from match progress, no
+    // real stamina simulation.
+    const outgoingMsg = `${msg}\n\n${getFitnessReport()}`;
+
     // 1. Create a session if we don't have one
     if (!currentSessionId) {
       console.log("Creating new agent session...");
@@ -340,7 +347,7 @@ async function sendInstructionToAgent(msg) {
     }
 
     // 2. Send the message to /run_sse
-    console.log(`Sending instruction to agent: "${msg}"`);
+    console.log(`Sending instruction to agent: "${outgoingMsg}"`);
     const runRes = await fetch('/run_sse', {
       method: 'POST',
       headers: {
@@ -352,7 +359,7 @@ async function sendInstructionToAgent(msg) {
         sessionId: currentSessionId,
         newMessage: {
           role: "user",
-          parts: [{ text: msg }]
+          parts: [{ text: outgoingMsg }]
         },
         streaming: false,
         stateDelta: null
@@ -400,7 +407,7 @@ async function sendInstructionToAgent(msg) {
       }
     }
 
-    if (huddleData) {
+    if (huddleData && showHuddle) {
       console.log("Extracted huddle data:", huddleData);
       if (gameInstance) {
         const scene = gameInstance.scene.getScene('SoccerGameScene');
@@ -409,7 +416,7 @@ async function sendInstructionToAgent(msg) {
           scene.showTeamHuddle(huddleData);
         }
       }
-    } else {
+    } else if (!huddleData) {
       console.warn("No huddle data found in agent response.");
     }
   } catch (err) {
@@ -496,8 +503,122 @@ window.addEventListener('soccer-game-over', (e) => {
   document.getElementById('game-over-screen').classList.add('active');
 });
 
+// ---- Player condition: fitness report + injury/substitution notifications ----
+
+const ROLES = ['defender', 'midfielder', 'forward', 'goalkeeper'];
+
+// Roles tire at slightly different rates (forwards/mids cover more ground).
+const TIRE_RATE = { forward: 1.25, midfielder: 1.2, defender: 0.95, goalkeeper: 0.5 };
+
+// The active scene, or null if no match is running.
+function getActiveScene() {
+  if (!gameInstance) return null;
+  const scene = gameInstance.scene.getScene('SoccerGameScene');
+  return scene && scene.gameActive ? scene : null;
+}
+
+// Build a short per-role tiredness note from match progress (matchTime counts
+// down from 90s). No real stamina model — this just gives the player agents
+// something to reason about so injuries/subs can emerge late in a match.
+function getFitnessReport() {
+  const scene = getActiveScene();
+  const matchTime = scene ? scene.matchTime : 90;
+  const progress = Math.min(1, Math.max(0, (90 - matchTime) / 90));
+
+  const notes = ROLES.map(role => {
+    const wear = progress * (TIRE_RATE[role] || 1) + Math.random() * 0.15;
+    let level;
+    if (wear < 0.45) level = 'fresh';
+    else if (wear < 0.7) level = 'tiring';
+    else if (wear < 0.95) level = 'very tired';
+    else level = 'exhausted';
+    return `${role}: ${level}`;
+  });
+  return `Fitness report (relay each player's condition note to them) — ${notes.join('; ')}.`;
+}
+
+// Periodically ask the team to self-report condition (autonomous injuries/subs),
+// independent of coach shouts. Huddle bubbles are suppressed for these checks.
+const STATUS_CHECK_MS = 35000;
+function runStatusCheck() {
+  if (!getActiveScene()) return;
+  sendInstructionToAgent(
+    "STATUS CHECK: Players, do not change tactics. Only call your substitution or injury tool if you are clearly too tired or hurt, based on your fitness note.",
+    { showHuddle: false }
+  );
+}
+
+// ---- Substitution / injury notification toasts (top-right) ----
+
+let notificationStack = null;
+function ensureNotificationStack() {
+  if (notificationStack) return notificationStack;
+  notificationStack = document.createElement('div');
+  notificationStack.id = 'notification-stack';
+  document.body.appendChild(notificationStack);
+  return notificationStack;
+}
+
+function showNotification(role, action, reason) {
+  const stack = ensureNotificationStack();
+  const isInjury = action === 'injury';
+  const toast = document.createElement('div');
+  toast.className = `pitch-toast ${isInjury ? 'toast-injury' : 'toast-sub'}`;
+  const icon = isInjury ? '⚠️' : '🔁';
+  const verb = isInjury ? 'reported an injury' : 'requested a substitution';
+  toast.innerHTML =
+    `<span class="toast-icon">${icon}</span>` +
+    `<span class="toast-text"><strong>${role.toUpperCase()}</strong> ${verb}` +
+    (reason ? ` <span class="toast-reason">(${reason})</span>` : '') +
+    `</span>`;
+  stack.appendChild(toast);
+  setTimeout(() => toast.classList.add('toast-hide'), 5000);
+  setTimeout(() => toast.remove(), 5600);
+}
+
+// Track the last-seen timestamp per role so each request shows exactly once.
+const lastSubTs = { defender: 0, midfielder: 0, forward: 0, goalkeeper: 0 };
+
+// Seed timestamps from any pre-existing file so stale entries don't toast on load.
+async function primeSubstitutions() {
+  try {
+    const res = await fetch('/player_state/substitutions.json?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    ROLES.forEach(role => {
+      if (data[role] && data[role].ts) lastSubTs[role] = data[role].ts;
+    });
+  } catch (err) {
+    // No file yet — nothing to prime.
+  }
+}
+
+async function checkSubstitutions() {
+  try {
+    const res = await fetch('/player_state/substitutions.json?t=' + Date.now());
+    if (!res.ok) return; // file may not exist yet
+    const data = await res.json();
+    ROLES.forEach(role => {
+      const entry = data[role];
+      if (entry && entry.ts && entry.ts > lastSubTs[role]) {
+        lastSubTs[role] = entry.ts;
+        console.log(`Player condition event: ${role} -> ${entry.action} (${entry.reason})`);
+        showNotification(role, entry.action, entry.reason);
+      }
+    });
+  } catch (err) {
+    // Silent: a malformed/missing file is fine.
+  }
+}
+
 // Load profiles initially on start
 loadProfiles();
 
 // Check for changes on disk every 2 seconds
 setInterval(checkJSONForChanges, 2000);
+
+// Poll for player condition events (injuries / sub requests) and toast them.
+primeSubstitutions().then(() => setInterval(checkSubstitutions, 2000));
+
+// Periodic team condition self-check so injuries/subs can happen autonomously.
+setInterval(runStatusCheck, STATUS_CHECK_MS);
