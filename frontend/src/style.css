@@ -647,3 +647,131 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   margin-bottom: 8px;
 }
+
+/* ============================================================
+   Debug Logs Panel
+   ============================================================ */
+.debug-log-panel {
+  width: 100%;
+  max-width: 1408px;
+  margin: 0 auto 12px;
+  box-sizing: border-box;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.debug-log-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Hide default disclosure triangle, draw our own caret */
+.debug-log-summary::-webkit-details-marker { display: none; }
+.debug-log-summary::before {
+  content: '▶';
+  font-size: 0.7rem;
+  color: var(--gold-accent);
+  transition: transform 0.2s ease;
+}
+.debug-log-panel[open] .debug-log-summary::before {
+  transform: rotate(90deg);
+}
+
+.debug-log-title {
+  font-weight: 800;
+  color: var(--gold-accent);
+  letter-spacing: 0.5px;
+}
+
+.debug-log-hint {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+.debug-log-clear {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.debug-log-clear:hover { background: rgba(255, 255, 255, 0.16); }
+
+.debug-log-body {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 8px 18px 14px;
+  border-top: 1px solid var(--card-border);
+  font-family: 'Outfit', monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.debug-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.debug-entry {
+  padding: 6px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+}
+.debug-entry:last-child { border-bottom: none; }
+
+.debug-entry-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.debug-time { color: var(--text-muted); font-size: 0.72rem; }
+
+.debug-role {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  font-size: 0.74rem;
+}
+.debug-defender   .debug-role { color: #60a5fa; }
+.debug-midfielder .debug-role { color: #34d399; }
+.debug-forward    .debug-role { color: #f87171; }
+.debug-goalkeeper .debug-role { color: #c084fc; }
+
+.debug-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.debug-entry-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-left: 4px;
+}
+
+.debug-change { white-space: nowrap; }
+.debug-key { color: var(--text-primary); }
+.debug-from { color: var(--text-muted); }
+.debug-arrow { color: var(--gold-accent); }
+.debug-to { color: #fff; font-weight: 700; }
