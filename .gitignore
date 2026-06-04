@@ -138,3 +138,5 @@ ehthumbs.db
 Thumbs.db
 
 *.adk
+
+node_modules/

@@ -6,6 +6,11 @@ import { Sound } from './audio';
 let gameInstance = null;
 let currentProfiles = {};
 
+// Toggle to show/hide the "Debug logs" panel entirely. Set to false to remove
+// the panel from the UI (it will not be rendered and no logs are collected).
+const DEBUG_LOGS_ENABLED = true;
+const MAX_DEBUG_ENTRIES = 200;
+
 // Inject the premium automated dashboard HTML structure
 document.querySelector('#app').innerHTML = `
   <div class="game-wrapper">
@@ -91,6 +96,20 @@ document.querySelector('#app').innerHTML = `
       </div>
     </div>
 
+    ${DEBUG_LOGS_ENABLED ? `
+    <!-- Debug Logs Panel -->
+    <details id="debug-log-panel" class="debug-log-panel">
+      <summary class="debug-log-summary">
+        <span class="debug-log-title">🛠️ Debug logs</span>
+        <span class="debug-log-hint">player config changes detected while polling player_state/*.json</span>
+        <button id="debug-log-clear" class="debug-log-clear" type="button">Clear</button>
+      </summary>
+      <div id="debug-log-body" class="debug-log-body">
+        <div class="debug-empty">Waiting for player config changes…</div>
+      </div>
+    </details>
+    ` : ''}
+
     <!-- Footer Info -->
     <footer class="game-footer">
       <p>Configure player attributes to run experiments and test defensive vs aggressive configurations.</p>
@@ -104,6 +123,65 @@ let lastFetchedTexts = {
   forward: "",
   goalkeeper: ""
 };
+
+// ---- Debug logs: track and render per-attribute config changes ----------
+
+// Format a value for display in the debug log (round floats, mark missing).
+function fmtDebugValue(v) {
+  if (v === undefined) return '∅';
+  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2);
+  return String(v);
+}
+
+// Compute the list of attribute-level differences between two profiles.
+function diffProfile(oldProfile, newProfile) {
+  const changes = [];
+  const keys = new Set([
+    ...Object.keys(oldProfile || {}),
+    ...Object.keys(newProfile || {})
+  ]);
+  keys.forEach(key => {
+    const before = oldProfile ? oldProfile[key] : undefined;
+    const after = newProfile ? newProfile[key] : undefined;
+    if (before !== after) changes.push({ key, before, after });
+  });
+  return changes;
+}
+
+// Append a log entry (newest on top) describing changes to a role's config.
+function appendDebugLog(role, changes, label) {
+  if (!DEBUG_LOGS_ENABLED || changes.length === 0) return;
+  const body = document.getElementById('debug-log-body');
+  if (!body) return;
+
+  const placeholder = body.querySelector('.debug-empty');
+  if (placeholder) placeholder.remove();
+
+  const time = new Date().toLocaleTimeString();
+  const entry = document.createElement('div');
+  entry.className = `debug-entry debug-${role}`;
+
+  const changesHtml = changes.map(c =>
+    `<span class="debug-change"><span class="debug-key">${c.key}</span> ` +
+    `<span class="debug-from">${fmtDebugValue(c.before)}</span>` +
+    `<span class="debug-arrow"> → </span>` +
+    `<span class="debug-to">${fmtDebugValue(c.after)}</span></span>`
+  ).join('');
+
+  entry.innerHTML =
+    `<div class="debug-entry-head">` +
+    `<span class="debug-time">[${time}]</span>` +
+    `<span class="debug-role">${role.toUpperCase()}</span>` +
+    (label ? `<span class="debug-label">${label}</span>` : '') +
+    `</div>` +
+    `<div class="debug-entry-changes">${changesHtml}</div>`;
+
+  body.prepend(entry);
+
+  while (body.children.length > MAX_DEBUG_ENTRIES) {
+    body.removeChild(body.lastChild);
+  }
+}
 
 // Fetch and load initial profiles from individual JSON files
 async function loadProfiles() {
@@ -119,6 +197,8 @@ async function loadProfiles() {
     fetched.forEach(({ role, text, json }) => {
       lastFetchedTexts[role] = text;
       currentProfiles[role] = json;
+      // Log the initial values so the panel shows the starting config.
+      appendDebugLog(role, diffProfile({}, json), 'initial load');
     });
 
     window.currentProfiles = currentProfiles; // Expose globally for Phaser
@@ -146,8 +226,11 @@ async function checkJSONForChanges() {
       const text = await res.text();
       if (text !== lastFetchedTexts[role]) {
         console.log(`Detected changes in player_state/${role}.json on disk. Updating simulation...`);
+        const newProfile = JSON.parse(text);
+        const changes = diffProfile(currentProfiles[role], newProfile);
+        appendDebugLog(role, changes, 'applied');
         lastFetchedTexts[role] = text;
-        currentProfiles[role] = JSON.parse(text);
+        currentProfiles[role] = newProfile;
         changed = true;
       }
     }));
@@ -166,6 +249,19 @@ async function checkJSONForChanges() {
   } catch (err) {
     console.error("Failed to fetch player profiles for update check:", err);
   }
+}
+
+// Debug logs: clear button (stop the click from toggling the <details>)
+const debugClearBtn = document.getElementById('debug-log-clear');
+if (debugClearBtn) {
+  debugClearBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const body = document.getElementById('debug-log-body');
+    if (body) {
+      body.innerHTML = '<div class="debug-empty">Waiting for player config changes…</div>';
+    }
+  });
 }
 
 // Audio toggling

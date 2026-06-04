@@ -653,6 +653,15 @@ export class SoccerGameScene extends Phaser.Scene {
     return profile.speed <= 2.0 ? base * profile.speed : profile.speed;
   }
 
+  // Resolve a distance-style attribute that may arrive either as a normalized
+  // 0-1 fraction (the agent-written JSON profiles) or as an absolute pixel value
+  // (the hardcoded defaults / red team). Values <= 2.0 are treated as a fraction
+  // of `max`; anything larger is taken as raw pixels. Mirrors getPlayerSpeed.
+  resolveDistance(value, max, fallback) {
+    if (value === undefined) return fallback;
+    return value <= 2.0 ? max * value : value;
+  }
+
   updateAllPlayersAI(time, delta) {
     const ballX = this.ball.x;
     const ballY = this.ball.y;
@@ -751,7 +760,7 @@ export class SoccerGameScene extends Phaser.Scene {
             const preferDribble = Math.random() < adjustedDribbleTend;
 
             // 1. Shoot check
-            if (distToGoal < (profile.shotRange || 500) && ((isBlue && p.x > 700) || (!isBlue && p.x < 700))) {
+            if (distToGoal < this.resolveDistance(profile.shotRange, 700, 500) && ((isBlue && p.x > 700) || (!isBlue && p.x < 700))) {
               if (distToGoal < 220 || !preferDribble) {
                 if (Math.random() > (profile.passProbability || 0.5)) {
                   // Find opposing goalkeeper
@@ -774,16 +783,17 @@ export class SoccerGameScene extends Phaser.Scene {
 
             // 2. Pass check
             if (!preferDribble) {
+              const passRange = this.resolveDistance(profile.passRange, 600, 450);
               let passTarget = this.findTeammateInDirection(p, teammates, directionFactor, 0);
-              
+
               // Validate if lane is clear of defenders
               if (passTarget && !this.isPassingLaneClear(p.x, p.y, passTarget.x, passTarget.y, opponents, profile.passRiskTolerance || 0.5)) {
                 passTarget = null;
               }
-              
+
               // Fallback to finding an open teammate with a clear passing lane
               if (!passTarget) {
-                passTarget = this.findOpenTeammate(p, teammates, profile.passRange || 450);
+                passTarget = this.findOpenTeammate(p, teammates, passRange);
               }
 
               if (passTarget) {
@@ -791,7 +801,7 @@ export class SoccerGameScene extends Phaser.Scene {
                 p.setData('kickChargeStart', time);
                 p.setData('kickReleaseAt', time + 200);
                 const distToMate = Phaser.Math.Distance.Between(p.x, p.y, passTarget.x, passTarget.y);
-                const passPower = Phaser.Math.Clamp(distToMate / (profile.passRange || 450), 0.45, 0.9);
+                const passPower = Phaser.Math.Clamp(distToMate / passRange, 0.45, 0.9);
                 p.setData('kickPower', passPower);
                 p.setData('kickDx', passTarget.x - p.x);
                 p.setData('kickDy', passTarget.y - p.y);
@@ -856,7 +866,7 @@ export class SoccerGameScene extends Phaser.Scene {
           this.movePlayerTowards(p, ballX, ballY, baseSpeed * pressSpeedFactor, teamNum);
 
           // Slide tackle trigger
-          if (opponentHasBall && distToBall < (profile.tackleRadius || 50)) {
+          if (opponentHasBall && distToBall < this.resolveDistance(profile.tackleRadius, 90, 50)) {
             const opp = this.possessor;
             const dx = opp.x - p.x;
             const dy = opp.y - p.y;
@@ -923,7 +933,7 @@ export class SoccerGameScene extends Phaser.Scene {
       const oppRole = opp.getData('role');
       const oppProfiles = opp.getData('team') === 1 ? this.blueProfiles : this.redProfiles;
       const oppProfile = oppProfiles ? oppProfiles[oppRole] : {};
-      const oppRadius = oppProfile.interceptionRadius !== undefined ? oppProfile.interceptionRadius : 60;
+      const oppRadius = this.resolveDistance(oppProfile.interceptionRadius, 100, 60);
 
       const dist = getDistanceToSegment(opp.x, opp.y, fromX, fromY, toX, toY);
       if (dist < oppRadius * toleranceFactor) {
