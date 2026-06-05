@@ -41,8 +41,6 @@ export class SoccerGameScene extends Phaser.Scene {
 
   preload() {
     this.load.image('pitch', '/assets/backgrounds/pitch.png');
-    this.load.image('crowd', '/assets/backgrounds/crowd_stands.png');
-    this.load.image('ad_board', '/assets/ui/ad_board.png');
     this.load.image('scoreboard', '/assets/ui/scoreboard.png');
     this.load.image('coach_portrait', '/assets/ui/coach_portrait.png');
     this.load.image('shout_input', '/assets/ui/shout_input.png');
@@ -72,17 +70,8 @@ export class SoccerGameScene extends Phaser.Scene {
     this.activeRedIdx = 0;
     this.huddleTimers = [];
 
-    // 1. Pitch background (grass)
+    // 1. Pitch background (grass, goals, flags, and crowd integrated)
     this.add.image(width / 2, height / 2, 'pitch');
-
-    // 2. Crowd Stands — show a full-width strip at native aspect ratio so the
-    //    spectators are NOT squished. We slice a horizontal band out of the
-    //    source texture and render it at scale 1 (the band's own aspect ratio
-    //    already matches the screen width, so no distortion occurs).
-    this.createCrowdStrips();
-    // Drawn after the (opaque) pitch so the stands sit on top of its edges.
-    this.add.image(width / 2, 75, 'crowd', 'crowd_top');
-    this.add.image(width / 2, height - 40, 'crowd', 'crowd_bottom').setFlipY(true);
 
     // Slice goalkeeper texture into animation frames
     this.createGoalkeeperFrames();
@@ -307,9 +296,6 @@ export class SoccerGameScene extends Phaser.Scene {
 
     // Power meter for charged kicks
     this.powerBarGfx = this.add.graphics();
-
-    // 10. Ad Boards
-    this.adBoard = this.add.image(width / 2, 715, 'ad_board').setScale(0.22);
 
     // 11. Scoreboard (Vector-based modern layout)
     const sbWidth = 420;
@@ -1770,14 +1756,7 @@ export class SoccerGameScene extends Phaser.Scene {
     });
   }
 
-  createCrowdStrips() {
-    // The crowd source is 1408x768 and fully opaque. Adding full-width frames
-    // and rendering them at scale 1 shows the spectators without the vertical
-    // squish that scaling the whole image to (1, 0.22) produced.
-    const tex = this.textures.get('crowd');
-    tex.add('crowd_top', 0, 0, 0, 1408, 150);
-    tex.add('crowd_bottom', 0, 0, 250, 1408, 80);
-  }
+
 
   // Build the invisible static collision walls for one goal. The mouth faces
   // the pitch; the back and sides contain the ball once it crosses the line.
@@ -1802,81 +1781,8 @@ export class SoccerGameScene extends Phaser.Scene {
     addWall(frontX, bottom, 12, 12);         // front post (bottom)
   }
 
-  // Draw both goals as clean top-down nets aligned to the collision walls.
-  drawGoals() {
-    // Default depth: drawn before players/ball so they appear in front of the net.
-    const g = this.add.graphics();
-    const top = this.goalMouthTop;
-    const bottom = this.goalMouthBottom;
-
-    const drawGoal = (backX, frontX, isLeftTeam) => {
-      const x0 = Math.min(backX, frontX);
-      const x1 = Math.max(backX, frontX);
-      const w = x1 - x0;
-      const h = bottom - top;
-
-      const teamColor = isLeftTeam ? 0x3b82f6 : 0xef4444;
-
-      // 1. Goal Net/Structure Shadow (cast onto grass)
-      g.fillStyle(0x022c22, 0.45); // Dark forest green/black shadow
-      g.fillRect(x0 + 8, top + 8, w, h);
-
-      // 2. Net Backing Depth (gradient-like fill)
-      g.fillStyle(0xffffff, 0.04);
-      g.fillRect(x0, top, w, h);
-
-      // 3. Diagonal Support Tension Poles (extending back to hold net)
-      g.lineStyle(3, 0x1e293b, 0.85); // Slate 800
-      // Draw top support pole
-      g.lineBetween(frontX, top, backX, top + 20);
-      // Draw bottom support pole
-      g.lineBetween(frontX, bottom, backX, bottom - 20);
-
-      // 4. Net Grid (fine nylon mesh)
-      g.lineStyle(1.2, 0xe2e8f0, 0.28); // Soft greyish white
-      const step = 14;
-      for (let x = x0; x <= x1; x += step) {
-        g.lineBetween(x, top, x, bottom);
-      }
-      for (let y = top; y <= bottom; y += step) {
-        g.lineBetween(x0, y, x1, y);
-      }
-
-      // 5. Team-colored Net Base/Tension Frames
-      g.lineStyle(3.5, teamColor, 0.85);
-      g.lineBetween(backX, top, backX, bottom); // Net back line
-      g.lineBetween(x0, top, x1, top);          // Top net border
-      g.lineBetween(x0, bottom, x1, bottom);    // Bottom net border
-
-      // 6. Upright Front Posts (rendered with 3D gloss/depth)
-      // Goal line plane (Front Crossbar)
-      g.lineStyle(6, 0xffffff, 1);
-      g.lineBetween(frontX, top, frontX, bottom);
-
-      // Shadow overlay on the front crossbar to give it cylindrical shape
-      g.lineStyle(1.5, 0xd1d5db, 0.8);
-      g.lineBetween(frontX + 1.5, top, frontX + 1.5, bottom);
-
-      // Post 1 (Top Corner Post)
-      g.fillStyle(0x000000, 0.25);
-      g.fillCircle(frontX + 2, top + 2, 8); // Shadow
-      g.fillStyle(0xffffff, 1);
-      g.fillCircle(frontX, top, 6);         // Base
-      g.fillStyle(0xe2e8f0, 1);
-      g.fillCircle(frontX - 1, top - 1, 4.5); // Inner highlight
-
-      // Post 2 (Bottom Corner Post)
-      g.fillStyle(0x000000, 0.25);
-      g.fillCircle(frontX + 2, bottom + 2, 8); // Shadow
-      g.fillStyle(0xffffff, 1);
-      g.fillCircle(frontX, bottom, 6);         // Base
-      g.fillStyle(0xe2e8f0, 1);
-      g.fillCircle(frontX - 1, bottom - 1, 4.5); // Inner highlight
-    };
-
-    drawGoal(this.leftGoalBack, this.leftGoalLine, true);
-    drawGoal(this.rightGoalBack, this.rightGoalLine, false);
-  }
+  // Draw both goals - now empty as they are baked directly into the background pitch image.
+  drawGoals() {}
 
   // --- Coach commands (invoked from the DOM shout bar in main.js) ---
   coachShoot(teamNum) {
