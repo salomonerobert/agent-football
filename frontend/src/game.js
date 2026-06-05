@@ -11,10 +11,11 @@ export class SoccerGameScene extends Phaser.Scene {
     this.gameActive = false;
     this.isResetting = false;
 
-    // 3D Ball flight variables
+    // Ball is top-down only and always rolls on the ground. ballZ/ballZVelocity
+    // are kept (pinned to 0) so the goal/capture checks that reference them still
+    // read as "grounded"; there is no loft/gravity any more.
     this.ballZ = 0;
     this.ballZVelocity = 0;
-    this.gravityZ = -0.28;
 
     // 5-a-side team player tracking
     this.bluePlayers = [];
@@ -475,45 +476,30 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   updateBallHeight(delta) {
-    if (this.ballZ > 0 || this.ballZVelocity > 0) {
-      this.ballZVelocity += this.gravityZ;
-      this.ballZ += this.ballZVelocity;
+    // The ball is purely top-down: it always rolls on the ground, never lofts.
+    // ballZ is pinned to 0 so the goal/capture checks that still reference it
+    // behave (a grounded ball is always scoreable and capturable).
+    this.ballZ = 0;
+    this.ballZVelocity = 0;
 
-      if (this.ballZ <= 0) {
-        this.ballZ = 0;
-        this.ballZVelocity = -this.ballZVelocity * 0.45;
-
-        if (Math.abs(this.ballZVelocity) > 0.5) {
-          Sound.playBounce();
-        } else {
-          this.ballZVelocity = 0;
-        }
-      }
-    }
-
-    // Rolling friction: a loose ball on the ground decelerates and settles;
-    // a lofted ball keeps its pace until it lands. (Damping is enabled, so
-    // drag is a per-second retention coefficient — lower = more friction.)
-    // The possessor dribbles by directly setting velocity, so leave its drag
-    // light to avoid fighting the glue.
-    const airborne = this.ballZ > 5;
-    this.ball.body.drag.set(this.possessor || airborne ? 0.9 : 0.55);
+    // Rolling friction: a loose ball decelerates and settles. The possessor
+    // dribbles by setting velocity directly, so keep its drag light to avoid
+    // fighting the glue. (Damping is enabled — drag is a per-second retention
+    // coefficient, lower = more friction.)
+    this.ball.body.drag.set(this.possessor ? 0.9 : 0.55);
 
     // Visual roll — spin the sprite in the travel direction, scaled by speed.
-    // Barely spins when lofted (it's flying, not rolling).
     const v = this.ball.body.velocity;
     const speed = Math.hypot(v.x, v.y);
     const dir = Math.abs(v.x) > 1 ? Math.sign(v.x) : (Math.abs(v.y) > 1 ? Math.sign(v.y) : 0);
-    const groundedFactor = Math.max(0, 1 - this.ballZ / 120);
-    this.ball.rotation += dir * speed * 0.00009 * (delta || 16) * groundedFactor;
+    this.ball.rotation += dir * speed * 0.00009 * (delta || 16);
 
-    this.ball.y = this.ball.body.y + this.ball.body.halfHeight - this.ballZ;
+    // Draw the ball on the ground with its shadow directly beneath it.
+    this.ball.y = this.ball.body.y + this.ball.body.halfHeight;
     this.ballShadow.x = this.ball.x;
     this.ballShadow.y = this.ball.body.y + this.ball.body.halfHeight;
-
-    const scaleFactor = Math.max(0.3, 1 - this.ballZ / 200);
-    this.ballShadow.setScale(scaleFactor);
-    this.ballShadow.setAlpha(Math.max(0.1, 0.35 - this.ballZ / 400));
+    this.ballShadow.setScale(1);
+    this.ballShadow.setAlpha(0.35);
   }
 
   handleAutoPlayerSwitching(time) {
@@ -1122,16 +1108,19 @@ export class SoccerGameScene extends Phaser.Scene {
     const teammates = teamNum === 1 ? this.bluePlayers : this.redPlayers;
     const passTarget = this.findTeammateInDirection(player, teammates, kdx, kdy);
 
+    // The ball always rolls along the ground (no loft) — players can't jump, and
+    // a vertical hop only distorts the apparent travel direction in this top-down
+    // view. Keep it grounded so kicks read true in every direction.
     if (passTarget) {
       const angleRad = Phaser.Math.Angle.Between(player.x, player.y, passTarget.x, passTarget.y);
       const passSpeed = 300 + 360 * power;
       this.ball.setVelocity(Math.cos(angleRad) * passSpeed, Math.sin(angleRad) * passSpeed);
-      this.ballZVelocity = 1.5 + 2.5 * power;
     } else {
       const shootSpeed = 420 + 360 * power;
       this.ball.setVelocity(kdx * shootSpeed, kdy * shootSpeed);
-      this.ballZVelocity = (2.5 + 4 * power) + Math.random();
     }
+    this.ballZ = 0;
+    this.ballZVelocity = 0;
   }
 
   triggerTeamKick(player, teamNum, dx, dy) {
@@ -1225,7 +1214,8 @@ export class SoccerGameScene extends Phaser.Scene {
       const direction = gk.x < 700 ? 1 : -1;
       ball.setVelocityX(direction * (240 + Math.random() * 160));
       ball.setVelocityY((Math.random() * 2 - 1) * 150);
-      this.ballZVelocity = 3.5 + Math.random() * 2.5;
+      this.ballZ = 0;
+      this.ballZVelocity = 0;
       this.lastTouchTeam = gk.x < 700 ? 1 : 2;
 
       const gkNum = gk.x < 700 ? 1 : 2;
