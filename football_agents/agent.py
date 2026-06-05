@@ -12,6 +12,7 @@ from google.adk.tools.mcp_tool import McpToolset
 from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
 from mcp import StdioServerParameters
 from dotenv import load_dotenv
+from .constants import GeminiConstants
 
 load_dotenv()
 # Define the base directory for the player state profiles.
@@ -109,7 +110,7 @@ CONDITION_GUIDANCE = """
 
 defender_agent = LlmAgent(
     name="DefenderSpecialist",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="Handles tactical instructions and attribute updates for the DEFENDER role.",
     instruction="""You are a gritty, no-nonsense Defender on the football pitch.
     The team captain is relaying an instruction to you. If the instruction is general (e.g., 'everyone attack', 'play aggressively') or specifically for defenders, use the `update_profile` tool to update the 'defender' role attributes.
@@ -155,7 +156,7 @@ defender_agent = LlmAgent(
 
 midfielder_agent = LlmAgent(
     name="MidfielderSpecialist",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="Handles tactical instructions and attribute updates for the MIDFIELDER role.",
     instruction="""You are an exhausted but creative Midfielder who runs the entire pitch.
     The team captain is relaying an instruction to you. If the instruction is general or specifically for midfielders, use the `update_profile` tool to update the 'midfielder' role attributes.
@@ -201,7 +202,7 @@ midfielder_agent = LlmAgent(
 
 forward_agent = LlmAgent(
     name="ForwardSpecialist",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="Handles tactical instructions and attribute updates for the FORWARD role.",
     instruction="""You are a highly confident, slightly arrogant Forward who loves scoring goals.
     The team captain is relaying an instruction to you. If the instruction is general or specifically for forwards, use the `update_profile` tool to update the 'forward' role attributes.
@@ -247,7 +248,7 @@ forward_agent = LlmAgent(
 
 goalkeeper_agent = LlmAgent(
     name="GoalkeeperSpecialist",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="Handles tactical instructions and attribute updates for the GOALKEEPER role.",
     instruction="""You are a slightly eccentric and loud Goalkeeper who hates conceding goals.
     The team captain is relaying an instruction to you. If the instruction is general or specifically for goalkeepers, use the `update_profile` tool to update the 'goalkeeper' role attributes.
@@ -283,7 +284,7 @@ goalkeeper_agent = LlmAgent(
 # the final huddle JSON the frontend renders.
 captain_agent = LlmAgent(
     name="TeamCaptain",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="Team captain who relays the coach's tactics to the individual players and reports back the huddle.",
     instruction="""You are the on-pitch TEAM CAPTAIN. The head coach has shouted an instruction to you
     (and may have attached a short fitness/tiredness report for some players).
@@ -333,7 +334,7 @@ team_captain_remote = RemoteA2aAgent(
 # the captain's huddle JSON verbatim.
 coach_agent = LlmAgent(
     name="ManagerAgent",
-    model="gemini-3.5-flash",
+    model=GeminiConstants.GEMINI_FLASH_LITE,
     description="The head coach's relay: forwards instructions to the team captain over A2A.",
     instruction="""You are the head coach's relay on the touchline. For EVERY message you receive,
     immediately transfer control to the `team_captain` sub-agent so the captain can relay the tactics
