@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAB01 - Avatar Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS Sprite Animation for Player Preview */
+        .sprite-container {
+            width: 117px;
+            /* 352 / 3 */
+            height: 256px;
+            /* 768 / 3 */
+            overflow: hidden;
+            border: 2px dashed #4b5563;
+            border-radius: 8px;
+            background-color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sprite-player {
+            width: 117px;
+            height: 256px;
+            background-repeat: no-repeat;
+            background-size: 469px 256px;
+            /* 1408/3 x 768/3 */
+            animation: walk 0.8s steps(4) infinite;
+        }
+
+        @keyframes walk {
+            100% {
+                background-position: -469px 0;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 py-6 px-8 shadow-md">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-400">⚽ Worldcup Mania: LAB01</h1>
+            <span class="bg-blue-900 text-blue-200 px-3 py-1 rounded-full text-sm font-semibold border border-blue-700">
+                Avatar Creator
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto my-8 px-6 flex flex-col space-y-8 flex-grow w-full">
+
+        <!-- Top: Simplified Grid Configuration -->
+        <section id="teamConfigSection" class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full">
+            <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-3">Configure Team Avatars</h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-700 text-gray-400 text-sm">
+                            <th class="pb-3 w-1/4">Team</th>
+                            <th class="pb-3 w-1/4">Jersey Color</th>
+                            <th class="pb-3 w-1/4">Logo / Crest</th>
+                            <th class="pb-3 w-1/4">Visual Style / Details</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-700/50">
+                        <!-- My Team Row -->
+                        <tr class="bg-blue-950/5">
+                            <td class="py-4 font-medium text-blue-400 flex items-center">
+                                <span class="mr-2">🔵</span> My Team (Blue)
+                            </td>
+                            <td class="py-4 pr-4">
+                                <select id="blueColor"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="blue" selected>Blue</option>
+                                    <option value="red">Red</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="green">Green</option>
+                                    <option value="white">White</option>
+                                    <option value="black">Black</option>
+                                    <option value="orange">Orange</option>
+                                    <option value="purple">Purple</option>
+                                </select>
+                            </td>
+                            <td class="py-4 pr-4">
+                                <input type="text" id="blueLogo" value="golden star"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </td>
+                            <td class="py-4">
+                                <input type="text" id="blueStyle" value="spiky black hair"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            </td>
+                        </tr>
+                        <!-- Opponent Row -->
+                        <tr class="bg-red-950/5">
+                            <td class="py-4 font-medium text-red-400 flex items-center">
+                                <span class="mr-2">🔴</span> Opponent (Red)
+                            </td>
+                            <td class="py-4 pr-4">
+                                <select id="redColor"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                                    <option value="red" selected>Red</option>
+                                    <option value="blue">Blue</option>
+                                    <option value="yellow">Yellow</option>
+                                    <option value="green">Green</option>
+                                    <option value="white">White</option>
+                                    <option value="black">Black</option>
+                                    <option value="orange">Orange</option>
+                                    <option value="purple">Purple</option>
+                                </select>
+                            </td>
+                            <td class="py-4 pr-4">
+                                <input type="text" id="redLogo" value="angry tiger"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                            </td>
+                            <td class="py-4">
+                                <input type="text" id="redStyle" value="bandana on head"
+                                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="text-xs text-gray-400">
+                    This will launch parallel chat sessions to generate consistent player and goalkeeper avatars.
+                </div>
+                <button type="button" id="generateBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-200 shadow-md shadow-blue-900/30 flex items-center space-x-2">
+                    <span>⚡ Generate Avatars</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Middle: Parallel Terminal Sessions (Hidden by default) -->
+        <section id="terminalSection" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+            <!-- My Team Terminal -->
+            <div class="bg-black border border-gray-800 rounded-xl p-4 font-mono text-xs shadow-2xl flex flex-col h-64">
+                <div class="flex items-center justify-between border-b border-gray-900 pb-2 mb-2 text-gray-500">
+                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-2"></span>
+                        session_my_team.log</span>
+                    <span class="text-[10px]">GEMINI-3.1-FLASH-IMAGE</span>
+                </div>
+                <div id="blueTerminal"
+                    class="flex-grow overflow-y-auto space-y-1 text-blue-400 scrollbar-thin scrollbar-thumb-gray-800">
+                    <!-- Logs will be appended here -->
+                </div>
+            </div>
+
+            <!-- Opponent Terminal -->
+            <div class="bg-black border border-gray-800 rounded-xl p-4 font-mono text-xs shadow-2xl flex flex-col h-64">
+                <div class="flex items-center justify-between border-b border-gray-900 pb-2 mb-2 text-gray-500">
+                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-red-500 mr-2"></span>
+                        session_opponent.log</span>
+                    <span class="text-[10px]">GEMINI-3.1-FLASH-IMAGE</span>
+                </div>
+                <div id="redTerminal"
+                    class="flex-grow overflow-y-auto space-y-1 text-red-400 scrollbar-thin scrollbar-thumb-gray-800">
+                    <!-- Logs will be appended here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom: Created Assets Preview (Hidden by default) -->
+        <section id="previewSection" class="hidden bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full">
+            <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-3 font-mono">Generated Assets</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- My Team Previews -->
+                <div class="space-y-6 p-6 border border-blue-900/30 rounded-xl bg-blue-950/5">
+                    <h3 class="text-lg font-semibold text-blue-400 flex items-center">
+                        <span class="mr-2">🔵</span> My Team (Blue Team) Assets
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Outfield Player
+                            </h4>
+                            <div
+                                class="border border-gray-700 rounded-lg p-2 bg-gray-950 flex items-center justify-center h-40">
+                                <img id="playerPreviewBlue" class="max-h-full max-w-full object-contain" src="">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Goalkeeper</h4>
+                            <div
+                                class="border border-gray-700 rounded-lg p-2 bg-gray-950 flex items-center justify-center h-40">
+                                <img id="gkPreviewBlue" class="max-h-full max-w-full object-contain" src="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center border-t border-gray-700/50 pt-4">
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">In-Game Run Loop
+                            Preview</h4>
+                        <div class="sprite-container">
+                            <div id="playerSpriteBlue" class="sprite-player" style="background-image: url('');"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opponent Previews -->
+                <div class="space-y-6 p-6 border border-red-900/30 rounded-xl bg-red-950/5">
+                    <h3 class="text-lg font-semibold text-red-400 flex items-center">
+                        <span class="mr-2">🔴</span> Opponent (Red Team) Assets
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Outfield Player
+                            </h4>
+                            <div
+                                class="border border-gray-700 rounded-lg p-2 bg-gray-950 flex items-center justify-center h-40">
+                                <img id="playerPreviewRed" class="max-h-full max-w-full object-contain" src="">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Goalkeeper</h4>
+                            <div
+                                class="border border-gray-700 rounded-lg p-2 bg-gray-950 flex items-center justify-center h-40">
+                                <img id="gkPreviewRed" class="max-h-full max-w-full object-contain" src="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center border-t border-gray-700/50 pt-4">
+                        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">In-Game Run Loop
+                            Preview</h4>
+                        <div class="sprite-container">
+                            <div id="playerSpriteRed" class="sprite-player" style="background-image: url('');"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prompt to proceed to profiles -->
+            <div class="mt-8 border-t border-gray-700/50 pt-6 flex justify-end">
+                <button type="button" id="goToProfilesBtn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-md shadow-blue-900/30 flex items-center space-x-2">
+                    <span>Configure Player Profiles ➡️</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Configure Player Profiles Section (Hidden by default) -->
+        <section id="profileConfigSection"
+            class="hidden bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg w-full">
+            <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-3 font-mono">Configure Default Player
+                Profiles (LAB02)</h2>
+            <p class="text-sm text-gray-400 mb-6">
+                Tweak the default behavior of your players. These values will be saved as the starting state for
+                **LAB02**, affecting their speed, positioning, and decisions on the pitch.
+            </p>
+
+            <!-- Role Tabs -->
+            <div class="flex border-b border-gray-700 mb-6 overflow-x-auto">
+                <button type="button"
+                    class="tab-btn py-2.5 px-6 font-semibold text-sm border-b-2 border-blue-500 text-blue-400 focus:outline-none whitespace-nowrap"
+                    data-tab="defender">Defender</button>
+                <button type="button"
+                    class="tab-btn py-2.5 px-6 font-semibold text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 focus:outline-none whitespace-nowrap"
+                    data-tab="midfielder">Midfielder</button>
+                <button type="button"
+                    class="tab-btn py-2.5 px-6 font-semibold text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 focus:outline-none whitespace-nowrap"
+                    data-tab="forward">Forward</button>
+                <button type="button"
+                    class="tab-btn py-2.5 px-6 font-semibold text-sm border-b-2 border-transparent text-gray-400 hover:text-gray-200 focus:outline-none whitespace-nowrap"
+                    data-tab="goalkeeper">Goalkeeper</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="tabContents" class="space-y-6">
+                <!-- Defender Tab -->
+                <div id="tab-defender" class="tab-content space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Speed Multiplier</span>
+                                <span id="val-def-speed" class="text-blue-400 font-mono">1.0x</span>
+                            </label>
+                            <input type="range" id="slide-def-speed" min="0.5" max="1.5" step="0.05" value="1.0"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Multiplies the base pace of the defender (210 px/s).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Defense Positioning (Depth)</span>
+                                <span id="val-def-depth" class="text-blue-400 font-mono">0.8</span>
+                            </label>
+                            <input type="range" id="slide-def-depth" min="0.1" max="1.0" step="0.05" value="0.8"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How deep the defender stays (higher = closer to own goal).
+                            </p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Aggression</span>
+                                <span id="val-def-aggression" class="text-blue-400 font-mono">0.6</span>
+                            </label>
+                            <input type="range" id="slide-def-aggression" min="0.1" max="1.0" step="0.05" value="0.6"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Willingness to press and attempt slide tackles.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Tackle Radius</span>
+                                <span id="val-def-tackle" class="text-blue-400 font-mono">0.6</span>
+                            </label>
+                            <input type="range" id="slide-def-tackle" min="0.3" max="1.0" step="0.05" value="0.6"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Distance from opponent at which defender initiates tackle.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Midfielder Tab (Hidden by default) -->
+                <div id="tab-midfielder" class="tab-content hidden space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Speed Multiplier</span>
+                                <span id="val-mid-speed" class="text-blue-400 font-mono">1.0x</span>
+                            </label>
+                            <input type="range" id="slide-mid-speed" min="0.5" max="1.5" step="0.05" value="1.0"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Multiplies the base pace of the midfielder (235 px/s).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Pass Probability</span>
+                                <span id="val-mid-pass" class="text-blue-400 font-mono">0.85</span>
+                            </label>
+                            <input type="range" id="slide-mid-pass" min="0.1" max="1.0" step="0.05" value="0.85"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Preference to pass instead of shooting or dribbling.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Attack Positioning</span>
+                                <span id="val-mid-attack" class="text-blue-400 font-mono">0.6</span>
+                            </label>
+                            <input type="range" id="slide-mid-attack" min="0.1" max="1.0" step="0.05" value="0.6"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How far they push forward to support attacks.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Support Run Frequency</span>
+                                <span id="val-mid-support" class="text-blue-400 font-mono">0.5</span>
+                            </label>
+                            <input type="range" id="slide-mid-support" min="0.1" max="1.0" step="0.05" value="0.5"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How often they make off-ball runs into open space.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forward Tab (Hidden by default) -->
+                <div id="tab-forward" class="tab-content hidden space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Speed Multiplier</span>
+                                <span id="val-fwd-speed" class="text-blue-400 font-mono">1.0x</span>
+                            </label>
+                            <input type="range" id="slide-fwd-speed" min="0.5" max="1.5" step="0.05" value="1.0"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Multiplies the base pace of the forward (260 px/s).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Attack Positioning (Stay High)</span>
+                                <span id="val-fwd-attack" class="text-blue-400 font-mono">0.9</span>
+                            </label>
+                            <input type="range" id="slide-fwd-attack" min="0.5" max="1.0" step="0.05" value="0.9"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How high they stay (higher = closer to opponent goal).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Shot Range</span>
+                                <span id="val-fwd-range" class="text-blue-400 font-mono">0.7</span>
+                            </label>
+                            <input type="range" id="slide-fwd-range" min="0.3" max="1.0" step="0.05" value="0.7"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Distance from goal at which they will attempt shots.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Dribble Tendency</span>
+                                <span id="val-fwd-dribble" class="text-blue-400 font-mono">0.6</span>
+                            </label>
+                            <input type="range" id="slide-fwd-dribble" min="0.1" max="1.0" step="0.05" value="0.6"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Preference to dribble instead of passing.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Goalkeeper Tab (Hidden by default) -->
+                <div id="tab-goalkeeper" class="tab-content hidden space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Speed Multiplier</span>
+                                <span id="val-gk-speed" class="text-blue-400 font-mono">1.0x</span>
+                            </label>
+                            <input type="range" id="slide-gk-speed" min="0.5" max="1.5" step="0.05" value="1.0"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Multiplies the base pace of the goalkeeper (180 px/s).</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Sweeper Tendency</span>
+                                <span id="val-gk-sweeper" class="text-blue-400 font-mono">0.1</span>
+                            </label>
+                            <input type="range" id="slide-gk-sweeper" min="0.0" max="0.8" step="0.05" value="0.1"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How far they rush off their line to clear long balls.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Tracking Speed</span>
+                                <span id="val-gk-tracking" class="text-blue-400 font-mono">0.05</span>
+                            </label>
+                            <input type="range" id="slide-gk-tracking" min="0.02" max="0.2" step="0.01" value="0.05"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">How quickly they move laterally to track the ball.</p>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex justify-between text-sm font-medium text-gray-400">
+                                <span>Dive Chance</span>
+                                <span id="val-gk-dive" class="text-blue-400 font-mono">0.08</span>
+                            </label>
+                            <input type="range" id="slide-gk-dive" min="0.02" max="0.3" step="0.01" value="0.08"
+                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
+                            <p class="text-xs text-gray-500">Tendency to trigger a diving block on close shots.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                class="mt-8 border-t border-gray-700/50 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div id="profileSaveStatus" class="text-sm font-semibold text-gray-400">
+                    Adjust sliders and click save to apply as LAB02 starting state.
+                </div>
+                <div class="flex items-center space-x-4 w-full sm:w-auto justify-end">
+                    <button type="button" id="backToAvatarsBtn" class="bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-2.5 px-4 rounded-lg transition duration-200 flex items-center space-x-2">
+                        <span>⬅️ Back to Avatars</span>
+                    </button>
+                    <button type="button" id="saveProfilesBtn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-md shadow-blue-900/30 flex items-center space-x-2 whitespace-nowrap">
+                        <span>💾 Save Player Profiles</span>
+                    </button>
+                    <button type="button" id="nextLabBtn"
+                        class="hidden bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-md shadow-green-900/30 flex items-center space-x-2 whitespace-nowrap">
+                        <span>Proceed to LAB02 ➡️</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 border-t border-gray-700 py-4 px-8 text-center text-sm text-gray-500">
+        Google Agent Development Kit Workshop &copy; 2026
+    </footer>
+
+    <!-- Script -->
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const teamConfigSection = document.getElementById('teamConfigSection');
+        const terminalSection = document.getElementById('terminalSection');
+        const previewSection = document.getElementById('previewSection');
+        const profileConfigSection = document.getElementById('profileConfigSection');
+        const blueTerminal = document.getElementById('blueTerminal');
+        const redTerminal = document.getElementById('redTerminal');
+
+        const playerPreviewBlue = document.getElementById('playerPreviewBlue');
+        const gkPreviewBlue = document.getElementById('gkPreviewBlue');
+        const playerSpriteBlue = document.getElementById('playerSpriteBlue');
+
+        const playerPreviewRed = document.getElementById('playerPreviewRed');
+        const gkPreviewRed = document.getElementById('gkPreviewRed');
+        const playerSpriteRed = document.getElementById('playerSpriteRed');
+
+        const goToProfilesBtn = document.getElementById('goToProfilesBtn');
+        const backToAvatarsBtn = document.getElementById('backToAvatarsBtn');
+        const saveProfilesBtn = document.getElementById('saveProfilesBtn');
+        const nextLabBtn = document.getElementById('nextLabBtn');
+        const profileSaveStatus = document.getElementById('profileSaveStatus');
+
+        function appendLog(terminal, message, type = 'info') {
+            const line = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            line.className = 'py-0.5';
+
+            let colorClass = 'text-gray-400';
+            if (terminal.id === 'blueTerminal') colorClass = 'text-blue-400';
+            if (terminal.id === 'redTerminal') colorClass = 'text-red-400';
+
+            if (type === 'error') {
+                line.innerHTML = `<span class="text-gray-600">[${timestamp}]</span> <span class="text-red-500 font-bold">ERROR: ${message}</span>`;
+            } else if (type === 'success') {
+                line.innerHTML = `<span class="text-gray-600">[${timestamp}]</span> <span class="text-green-400">✔ ${message}</span>`;
+            } else {
+                line.innerHTML = `<span class="text-gray-600">[${timestamp}]</span> <span class="${colorClass}">${message}</span>`;
+            }
+
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        async function streamTeam(teamId, terminal) {
+            const payload = {
+                color: document.getElementById(`${teamId}Color`).value,
+                logo: document.getElementById(`${teamId}Logo`).value,
+                style: document.getElementById(`${teamId}Style`).value
+            };
+
+            appendLog(terminal, `Starting pipeline for ${teamId} team...`);
+
+            try {
+                const response = await fetch(`/generate/stream/${teamId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    appendLog(terminal, `Server returned error: ${errText}`, 'error');
+                    return null;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                const assets = { player: null, goalkeeper: null };
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+
+                    // Keep the last incomplete line in the buffer
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+                        try {
+                            const rawData = trimmed.substring(6);
+                            const data = JSON.parse(rawData);
+
+                            if (data.status === 'log') {
+                                appendLog(terminal, data.message);
+                            } else if (data.status === 'error') {
+                                appendLog(terminal, data.message, 'error');
+                            } else if (data.status === 'player_done') {
+                                appendLog(terminal, `Player spritesheet generated successfully.`, 'success');
+                                assets.player = data.image;
+                            } else if (data.status === 'gk_done') {
+                                appendLog(terminal, `Goalkeeper spritesheet generated successfully.`, 'success');
+                                assets.goalkeeper = data.image;
+                            } else if (data.status === 'all_done') {
+                                appendLog(terminal, `Pipeline completed successfully for ${teamId} team!`, 'success');
+                            }
+                        } catch (e) {
+                            console.error("Error parsing stream chunk:", e, trimmed);
+                        }
+                    }
+                }
+
+                return assets;
+
+            } catch (err) {
+                appendLog(terminal, `Connection error: ${err.message}`, 'error');
+                return null;
+            }
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            // Validation
+            if (!document.getElementById('blueLogo').value || !document.getElementById('redLogo').value) {
+                alert("Please fill in logo details for both teams.");
+                return;
+            }
+
+            // UI Reset
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            generateBtn.innerHTML = `<span>⏳ Generating...</span>`;
+
+            teamConfigSection.classList.remove('hidden');
+            terminalSection.classList.remove('hidden');
+            previewSection.classList.add('hidden');
+            profileConfigSection.classList.add('hidden');
+            nextLabBtn.classList.add('hidden');
+
+            blueTerminal.innerHTML = '';
+            redTerminal.innerHTML = '';
+
+            // Run parallel streams
+            const [blueAssets, redAssets] = await Promise.all([
+                streamTeam('blue', blueTerminal),
+                streamTeam('red', redTerminal)
+            ]);
+
+            // Restore button
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            generateBtn.innerHTML = `<span>🔄 Regenerate Avatars</span>`;
+
+            if (blueAssets && blueAssets.player && blueAssets.goalkeeper &&
+                redAssets && redAssets.player && redAssets.goalkeeper) {
+
+                // Populate Previews
+                playerPreviewBlue.src = blueAssets.player;
+                gkPreviewBlue.src = blueAssets.goalkeeper;
+                playerSpriteBlue.style.backgroundImage = `url('${blueAssets.player}')`;
+
+                playerPreviewRed.src = redAssets.player;
+                gkPreviewRed.src = redAssets.goalkeeper;
+                playerSpriteRed.style.backgroundImage = `url('${redAssets.player}')`;
+
+                // Show Previews (but NOT profiles yet!)
+                previewSection.classList.remove('hidden');
+
+                // Scroll to previews
+                previewSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                alert("Some assets failed to generate. Please check the logs in the terminal sessions.");
+            }
+        });
+
+        // Navigation: Go to Profiles (Wizard Step 2)
+        goToProfilesBtn.addEventListener('click', () => {
+            // Hide Step 1 elements
+            teamConfigSection.classList.add('hidden');
+            terminalSection.classList.add('hidden');
+            previewSection.classList.add('hidden');
+
+            // Show Step 2 elements
+            profileConfigSection.classList.remove('hidden');
+
+            // Scroll to top of page
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Navigation: Back to Avatars
+        backToAvatarsBtn.addEventListener('click', () => {
+            // Show Step 1 elements
+            teamConfigSection.classList.remove('hidden');
+            terminalSection.classList.remove('hidden');
+            previewSection.classList.remove('hidden');
+
+            // Hide Step 2 elements
+            profileConfigSection.classList.add('hidden');
+
+            // Scroll back to preview
+            previewSection.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // Tab switching logic
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+
+                // Update button styles
+                tabBtns.forEach(b => {
+                    b.classList.remove('border-blue-500', 'text-blue-400');
+                    b.classList.add('border-transparent', 'text-gray-400', 'hover:text-gray-200');
+                });
+                btn.classList.add('border-blue-500', 'text-blue-400');
+                btn.classList.remove('border-transparent', 'text-gray-400', 'hover:text-gray-200');
+
+                // Show/hide content
+                tabContents.forEach(content => {
+                    if (content.id === `tab-${targetTab}`) {
+                        content.classList.remove('hidden');
+                    } else {
+                        content.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Slider value display updates
+        const sliders = [
+            { id: 'def-speed', suffix: 'x' },
+            { id: 'def-depth', suffix: '' },
+            { id: 'def-aggression', suffix: '' },
+            { id: 'def-tackle', suffix: '' },
+            { id: 'mid-speed', suffix: 'x' },
+            { id: 'mid-pass', suffix: '' },
+            { id: 'mid-attack', suffix: '' },
+            { id: 'mid-support', suffix: '' },
+            { id: 'fwd-speed', suffix: 'x' },
+            { id: 'fwd-attack', suffix: '' },
+            { id: 'fwd-range', suffix: '' },
+            { id: 'fwd-dribble', suffix: '' },
+            { id: 'gk-speed', suffix: 'x' },
+            { id: 'gk-sweeper', suffix: '' },
+            { id: 'gk-tracking', suffix: '' },
+            { id: 'gk-dive', suffix: '' }
+        ];
+
+        sliders.forEach(s => {
+            const slider = document.getElementById(`slide-${s.id}`);
+            const valDisplay = document.getElementById(`val-${s.id}`);
+            if (slider && valDisplay) {
+                slider.addEventListener('input', () => {
+                    valDisplay.innerText = slider.value + s.suffix;
+                });
+            }
+        });
+
+        // Save Profiles Logic
+        saveProfilesBtn.addEventListener('click', async () => {
+            saveProfilesBtn.disabled = true;
+            saveProfilesBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            profileSaveStatus.className = "text-sm font-semibold text-blue-400 animate-pulse";
+            profileSaveStatus.innerText = "Saving profiles to LAB02...";
+
+            const payload = {
+                defender: {
+                    speed: parseFloat(document.getElementById('slide-def-speed').value),
+                    defensePositioning: parseFloat(document.getElementById('slide-def-depth').value),
+                    aggression: parseFloat(document.getElementById('slide-def-aggression').value),
+                    tackleRadius: parseFloat(document.getElementById('slide-def-tackle').value)
+                },
+                midfielder: {
+                    speed: parseFloat(document.getElementById('slide-mid-speed').value),
+                    passProbability: parseFloat(document.getElementById('slide-mid-pass').value),
+                    attackPositioning: parseFloat(document.getElementById('slide-mid-attack').value),
+                    supportRunFrequency: parseFloat(document.getElementById('slide-mid-support').value)
+                },
+                forward: {
+                    speed: parseFloat(document.getElementById('slide-fwd-speed').value),
+                    attackPositioning: parseFloat(document.getElementById('slide-fwd-attack').value),
+                    shotRange: parseFloat(document.getElementById('slide-fwd-range').value),
+                    dribbleTendency: parseFloat(document.getElementById('slide-fwd-dribble').value)
+                },
+                goalkeeper: {
+                    speed: parseFloat(document.getElementById('slide-gk-speed').value),
+                    attackPositioning: parseFloat(document.getElementById('slide-gk-sweeper').value),
+                    trackingSpeed: parseFloat(document.getElementById('slide-gk-tracking').value),
+                    diveChance: parseFloat(document.getElementById('slide-gk-dive').value)
+                }
+            };
+
+            try {
+                const response = await fetch('/save/profiles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    profileSaveStatus.className = "text-sm font-semibold text-green-400";
+                    profileSaveStatus.innerText = "Success! Default player profiles saved for LAB02.";
+                    nextLabBtn.classList.remove('hidden');
+                } else {
+                    profileSaveStatus.className = "text-sm font-semibold text-red-400";
+                    profileSaveStatus.innerText = `Error: ${result.detail || 'Failed to save profiles'}`;
+                }
+            } catch (err) {
+                profileSaveStatus.className = "text-sm font-semibold text-red-400";
+                profileSaveStatus.innerText = `Network Error: ${err.message}`;
+            } finally {
+                saveProfilesBtn.disabled = false;
+                saveProfilesBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        nextLabBtn.addEventListener('click', () => {
+            window.location.href = "http://localhost:5173";
+        });
+    </script>
+</body>
+
+</html>
