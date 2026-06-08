@@ -65,8 +65,22 @@ document.querySelector('#app').innerHTML = `
         </div>
       </div>
 
-      <!-- Phaser Game Canvas Container -->
-      <div id="phaser-container" class="canvas-container"></div>
+      <!-- Side-by-side Layout -->
+      <div class="game-layout">
+        <!-- Phaser Game Canvas Container -->
+        <div id="phaser-container" class="canvas-container"></div>
+
+        <!-- 📟 Live Agent Terminal -->
+        <div id="agent-terminal" class="agent-terminal">
+          <div class="terminal-header">
+            <span class="terminal-title">📟 Live Agent Trace</span>
+            <button id="terminal-clear" class="terminal-clear">Clear</button>
+          </div>
+          <div id="terminal-body" class="terminal-body">
+            <div class="terminal-line line-system">> Simulator ready. Waiting for Coach instruction...</div>
+          </div>
+        </div>
+      </div>
 
       <!-- Game Over Overlay -->
       <div id="game-over-screen" class="menu-screen">
@@ -286,11 +300,17 @@ rematchBtn.addEventListener('click', () => {
   Sound.playMenuClick();
   document.getElementById('game-over-screen').classList.remove('active');
 
-  if (gameInstance) {
-    const scene = gameInstance.scene.getScene('SoccerGameScene');
-    scene.restartMatch();
-    Sound.playWhistle();
-  }
+  appendTerminalLine("system", `> 🔄 Rematch clicked: Restoring starting baseline profiles...`);
+  
+  // Restore profiles to LAB01 starting baseline before restarting
+  sendInstructionToAgent("RESTORE_BASELINE", { showHuddle: false }).then(() => {
+    loadProfiles(); // Reload the fresh baseline profiles
+    if (gameInstance) {
+      const scene = gameInstance.scene.getScene('SoccerGameScene');
+      scene.restartMatch();
+      Sound.playWhistle();
+    }
+  });
 });
 
 // Simulation speed slider listener
@@ -312,14 +332,22 @@ const shoutBtn = document.getElementById('shout-send-btn');
 
 let currentSessionId = null;
 
+let currentHuddleData = null;
+
 async function sendInstructionToAgent(msg, options = {}) {
   const { showHuddle = true } = options;
+  currentHuddleData = null; // Reset for this run
+  
   try {
-    // Attach a short fitness/tiredness report so the captain can relay condition
-    // notes to players (who may then request a substitution / report an injury
-    // via their MCP tools). Kept lightweight: derived from match progress, no
-    // real stamina simulation.
     const outgoingMsg = `${msg}\n\n${getFitnessReport()}`;
+
+    // Log initial trigger in terminal
+    if (showHuddle) {
+      appendTerminalLine("system", `> 📣 Coach shouted: "${msg}"`);
+      appendTerminalLine("coach", `📣 Coach: "Relaying instruction to Team Captain over A2A (port 8001)..."`);
+    } else {
+      appendTerminalLine("system", `> 🤖 Running periodic status check...`);
+    }
 
     // 1. Create a session if we don't have one
     if (!currentSessionId) {
@@ -346,8 +374,8 @@ async function sendInstructionToAgent(msg, options = {}) {
       console.log(`Agent session created successfully. Session ID: ${currentSessionId}`);
     }
 
-    // 2. Send the message to /run_sse
-    console.log(`Sending instruction to agent: "${outgoingMsg}"`);
+    // 2. Send the message to /run_sse with streaming: true
+    console.log(`Sending instruction to agent (streaming): "${outgoingMsg}"`);
     const runRes = await fetch('/run_sse', {
       method: 'POST',
       headers: {
@@ -361,7 +389,7 @@ async function sendInstructionToAgent(msg, options = {}) {
           role: "user",
           parts: [{ text: outgoingMsg }]
         },
-        streaming: false,
+        streaming: true, // 🟢 Enable streaming!
         stateDelta: null
       })
     });
@@ -370,57 +398,162 @@ async function sendInstructionToAgent(msg, options = {}) {
       throw new Error(`Failed to run agent: ${runRes.statusText}`);
     }
 
-    const text = await runRes.text();
-    console.log("Agent raw SSE response:", text);
+    // 3. Read the SSE stream chunk by chunk
+    const reader = runRes.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
 
-    // Extract all JSON data from SSE format: lines starting with 'data: '
-    const lines = text.split('\n');
-    let huddleData = null;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    for (const line of lines) {
-      if (line.trim().startsWith('data: ')) {
-        const jsonStr = line.replace(/^data:\s*/, '').trim();
-        if (!jsonStr) continue;
-        try {
-          const event = JSON.parse(jsonStr);
-          if (event.content && event.content.parts) {
-            for (const part of event.content.parts) {
-              if (part.text) {
-                const trimmedText = part.text.trim();
-                // Check if it looks like JSON containing the huddle
-                if (trimmedText.startsWith('{') && trimmedText.includes('"huddle"')) {
-                  try {
-                    const parsed = JSON.parse(trimmedText);
-                    if (parsed.huddle) {
-                      huddleData = parsed.huddle;
-                    }
-                  } catch (e) {
-                    console.warn("Failed to parse inner JSON part:", e);
-                  }
-                }
-              }
-            }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      
+      // Keep the last incomplete line in the buffer
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.trim().startsWith('data: ')) {
+          const jsonStr = line.replace(/^data:\s*/, '').trim();
+          if (!jsonStr) continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            processAgentEvent(event);
+          } catch (err) {
+            // Silent catch for partial or malformed chunks
           }
-        } catch (err) {
-          // Silent catch for non-JSON or partial event chunks
         }
       }
     }
 
-    if (huddleData && showHuddle) {
-      console.log("Extracted huddle data:", huddleData);
+    // Apply the accumulated huddle data at the end of the stream
+    if (currentHuddleData && showHuddle) {
+      console.log("Applying final huddle data to game:", currentHuddleData);
       if (gameInstance) {
         const scene = gameInstance.scene.getScene('SoccerGameScene');
         if (scene && scene.gameActive) {
-          // Trigger player shouts sequentially
-          scene.showTeamHuddle(huddleData);
+          scene.showTeamHuddle(currentHuddleData);
         }
       }
-    } else if (!huddleData) {
-      console.warn("No huddle data found in agent response.");
+    } else if (!currentHuddleData && showHuddle) {
+      appendTerminalLine("system", `> ⚠️ No huddle response received from Team Captain.`);
     }
   } catch (err) {
-    console.error("Error communicating with agent on port 8000:", err);
+    console.error("Error communicating with agent:", err);
+    appendTerminalLine("system", `> ❌ Error: ${err.message}`);
+  }
+}
+
+// 📟 Helper to parse and log agent events to the terminal in real-time
+function processAgentEvent(event) {
+  // Log the raw event to the console for debugging A2A stream contents
+  console.log("[Stream Event]", event);
+
+  // 🔴 Handle backend errors (e.g., stale session) gracefully by invalidating the session ID
+  if (event.error) {
+    appendTerminalLine("system", `> ❌ Session Error: ${event.error}`);
+    console.warn("Session error detected. Invalidating currentSessionId.");
+    currentSessionId = null; // Force a fresh session on the next shout
+    return;
+  }
+
+  const author = event.author;
+  const content = event.content;
+  const actions = event.actions;
+
+  // 1. Check for A2A Transfer (Coach -> Captain)
+  if (author === "ManagerAgent" && actions && actions.transferToAgent === "team_captain") {
+    appendTerminalLine("coach", `🔗 Coach: Relayed to Team Captain over A2A!`);
+    return;
+  }
+
+  // 2. Check for Captain delegating to specialists
+  if (author === "TeamCaptain") {
+    if (content && content.parts) {
+      for (const part of content.parts) {
+        if (part.functionCall) {
+          const call = part.functionCall;
+          const targetRole = call.name.replace("Specialist", "").toLowerCase();
+          const instruction = call.args.instruction || "";
+          appendTerminalLine("captain", `🎛️ Captain: Delegating to ${targetRole.toUpperCase()} ➔ "${instruction}"`);
+        }
+      }
+    }
+  }
+
+  // 3. Check for Specialist actions (updating profile or MCP)
+  if (author && author.endsWith("Specialist")) {
+    const role = author.replace("Specialist", "").toLowerCase();
+    
+    if (content && content.parts) {
+      for (const part of content.parts) {
+        // Tool Calls (update_profile or MCP)
+        if (part.functionCall) {
+          const call = part.functionCall;
+          if (call.name === "update_profile") {
+            const changes = JSON.stringify(call.args.changes);
+            appendTerminalLine(role, `🛡️ ${author}: Calling update_profile tool ➔ ${changes}`);
+          } else if (call.name === "report_injury") {
+            appendTerminalLine(role, `⚠️ ${author} (MCP): Reported injury! Severity: "${call.args.severity || 'knock'}"`);
+          } else if (call.name === "request_substitution") {
+            appendTerminalLine(role, `🔁 ${author} (MCP): Requested substitution! Reason: "${call.args.reason || 'tired'}"`);
+          }
+        }
+
+        // Text responses (quirky quotes)
+        if (part.text) {
+          const text = part.text.trim();
+          // Skip if it's the final JSON huddle
+          if (!text.startsWith("{")) {
+            appendTerminalLine(role, `💬 ${author}: "${text}"`);
+          }
+        }
+      }
+    }
+  }
+
+  // 4. Check for final huddle JSON (exposing this to ANY author because the Coach
+  //    relays the Captain's response, so the final event comes from ManagerAgent).
+  if (content && content.parts) {
+    for (const part of content.parts) {
+      if (part.text) {
+        const text = part.text.trim();
+        if (text.startsWith("{") && text.includes('"huddle"')) {
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed.huddle) {
+              currentHuddleData = parsed.huddle;
+              appendTerminalLine("captain", `📋 Captain: Huddle assembled!`);
+              Object.entries(currentHuddleData).forEach(([player, quote]) => {
+                appendTerminalLine("system", `   └─ ${player.toUpperCase()}: "${quote}"`);
+              });
+            }
+          } catch (e) {
+            // Partial JSON
+          }
+        }
+      }
+    }
+  }
+}
+
+// 📟 Append a styled line to the UI terminal
+function appendTerminalLine(type, text) {
+  const body = document.getElementById("terminal-body");
+  if (!body) return;
+
+  const line = document.createElement("div");
+  line.className = `terminal-line line-${type}`;
+  line.textContent = text;
+  body.appendChild(line);
+
+  // Auto-scroll to bottom
+  body.scrollTop = body.scrollHeight;
+
+  // Limit lines to 100 to prevent bloat
+  while (body.children.length > 100) {
+    body.removeChild(body.firstChild);
   }
 }
 
@@ -611,8 +744,21 @@ async function checkSubstitutions() {
   }
 }
 
-// Load profiles initially on start
-loadProfiles();
+// Load profiles initially on start (and handle baseline backup/restore)
+const isInitialized = sessionStorage.getItem('lab02_initialized');
+
+if (!isInitialized) {
+  console.log("--> [SYSTEM] First load: backing up LAB01 baseline...");
+  sendInstructionToAgent("BACKUP_BASELINE", { showHuddle: false }).then(() => {
+    sessionStorage.setItem('lab02_initialized', 'true');
+    loadProfiles();
+  });
+} else {
+  console.log("--> [SYSTEM] Refresh detected: restoring LAB01 baseline...");
+  sendInstructionToAgent("RESTORE_BASELINE", { showHuddle: false }).then(() => {
+    loadProfiles();
+  });
+}
 
 // Check for changes on disk every 2 seconds
 setInterval(checkJSONForChanges, 2000);
@@ -622,3 +768,17 @@ primeSubstitutions().then(() => setInterval(checkSubstitutions, 2000));
 
 // Periodic team condition self-check so injuries/subs can happen autonomously.
 setInterval(runStatusCheck, STATUS_CHECK_MS);
+
+// 📟 Wire up terminal clear button
+const terminalClearBtn = document.getElementById("terminal-clear");
+if (terminalClearBtn) {
+  terminalClearBtn.addEventListener("click", () => {
+    const body = document.getElementById("terminal-body");
+    if (body) {
+      body.innerHTML = '<div class="terminal-line line-system">> Terminal cleared. Ready.</div>';
+    }
+  });
+}
+
+// Log initial state
+appendTerminalLine("system", "> Simulator started. Outfield players running with default profiles.");

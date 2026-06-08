@@ -79,16 +79,16 @@ body {
 .game-container {
   position: relative;
   width: 100%;
-  max-width: 1120px; /* High definition widescreen size scale */
-  aspect-ratio: 16 / 8.727; /* Proportion matching 1408x768 */
+  max-width: 1400px; /* Increased to accommodate terminal */
+  height: 568px; /* Fixed height to match Phaser scaled height + terminal */
   background: #08090e;
   border-radius: 16px;
   border: 2px solid var(--card-border);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
   overflow: hidden;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row; /* Side-by-side layout */
+  align-items: stretch;
 }
 
 /* Canvas Container */
@@ -364,7 +364,7 @@ body {
 /* Interactive Coach Shout Bar Styles */
 .coach-shout-bar {
   width: 100%;
-  max-width: 1120px;
+  max-width: 1400px; /* Match game-container */
   background: rgba(15, 17, 28, 0.75);
   border: 2px solid var(--card-border);
   border-top: none;
@@ -823,3 +823,110 @@ body {
   from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* ============================================================
+   📟 Multi-Agent Live Terminal Styles
+   ============================================================ */
+.game-layout {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  align-items: stretch;
+}
+
+.canvas-container {
+  flex: 1; /* Takes remaining space (~1040px) */
+  height: 100%;
+}
+
+.agent-terminal {
+  flex: 0 0 360px; /* Fixed width for terminal */
+  background: #020617;
+  border-left: 2px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.terminal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #0f172a;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.terminal-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--gold-accent);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.terminal-clear {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.terminal-clear:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  font-family: 'Outfit', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #020617;
+}
+
+.terminal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.terminal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.terminal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.terminal-line {
+  word-wrap: break-word;
+  opacity: 0.9;
+  text-align: left;
+  animation: fadeInLine 0.2s ease-out forwards;
+}
+
+@keyframes fadeInLine {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 0.9; transform: translateY(0); }
+}
+
+/* Agent-specific colors in terminal */
+.line-system { color: #64748b; font-style: italic; } /* Muted slate */
+.line-coach { color: #f59e0b; font-weight: bold; }   /* Amber */
+.line-captain { color: #06b6d4; font-weight: bold; } /* Cyan */
+.line-defender { color: #60a5fa; }                  /* Light Blue */
+.line-midfielder { color: #34d399; }                /* Light Green */
+.line-forward { color: #f87171; }                   /* Light Red */
+.line-goalkeeper { color: #c084fc; }                /* Light Purple */

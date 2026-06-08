@@ -1,0 +1,128 @@
+import json
+import os
+import shutil
+import sys
+from google.adk.tools.mcp_tool import McpToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
+from mcp import StdioServerParameters
+
+# Resolve paths relative to this file.
+# BASE_DIR is LAB02/football_agents/specialist_agents/
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PLAYER_STATE_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../frontend/public/player_state"))
+MCP_SERVER_PATH = os.path.abspath(os.path.join(BASE_DIR, "../football_mcp_server.py"))
+
+def initialize_profiles():
+    """Bootstraps the individual JSON files if they don't exist."""
+    os.makedirs(PLAYER_STATE_DIR, exist_ok=True)
+
+    default_profiles = {
+        "defender": {"speed": 210, "defensePositioning": 0.8, "attackPositioning": 0.3, "aggression": 0.6, "passProbability": 0.75, "widthPreference": 0.3, "pressingIntensity": 0.3},
+        "midfielder": {"speed": 235, "defensePositioning": 0.5, "attackPositioning": 0.6, "aggression": 0.75, "passProbability": 0.85, "widthPreference": 0.5, "pressingIntensity": 0.6},
+        "forward": {"speed": 260, "defensePositioning": 0.2, "attackPositioning": 0.9, "aggression": 0.9, "passProbability": 0.3, "widthPreference": 0.8, "pressingIntensity": 0.8},
+        "goalkeeper": {"speed": 180, "defensePositioning": 1.0, "attackPositioning": 0.0, "aggression": 0.1, "passProbability": 0.9, "diveChance": 0.08, "trackingSpeed": 0.05}
+    }
+
+    for role, data in default_profiles.items():
+        file_path = os.path.join(PLAYER_STATE_DIR, f"{role}.json")
+        if not os.path.exists(file_path):
+            print(f"Creating default {file_path}...")
+            with open(file_path, 'w') as f:
+                json.dump(data, f, indent=2)
+
+# Ensure the profiles exist as soon as this module is imported
+initialize_profiles()
+
+def update_profile(role: str, changes: dict) -> str:
+    """
+    Tool for agents to update the JSON profile for a specific role.
+
+    Args:
+        role: The player role ('defender', 'midfielder', 'forward', 'goalkeeper').
+        changes: A dictionary of attributes to update (e.g. {"attackPositioning": 0.9, "aggression": 0.8}).
+    """
+    file_path = os.path.join(PLAYER_STATE_DIR, f"{role}.json")
+    try:
+        if not os.path.exists(file_path):
+            return f"Error: Profile file for role '{role}' not found."
+
+        with open(file_path, 'r') as f:
+            profile = json.load(f)
+
+        profile.update(changes)
+
+        with open(file_path, 'w') as f:
+            json.dump(profile, f, indent=2)
+
+        print(f"--> [SYSTEM] Updated {role.upper()} profile with: {changes}")
+        return f"Success: {role} tactics updated."
+
+    except Exception as e:
+        return f"File error: {str(e)}"
+
+
+def make_condition_toolset() -> McpToolset:
+    """Build an MCP toolset (stdio) exposing the injury/substitution tools.
+
+    A fresh toolset per player keeps each agent's MCP session isolated. The
+    server is spawned on demand with the same Python interpreter running ADK.
+    """
+    return McpToolset(
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command=sys.executable,
+                args=[MCP_SERVER_PATH],
+            ),
+        ),
+        tool_filter=["report_injury", "request_substitution"],
+    )
+
+
+# Shared guidance appended to every outfield player about self-reporting condition.
+CONDITION_GUIDANCE = """
+
+    CONDITION SELF-CHECK:
+    The captain may relay a fitness/tiredness note about you. If it says you are
+    badly tired/exhausted, call the `request_substitution` MCP tool with your role
+    and reason 'tired'. If it says you are injured/hurt, call the `report_injury`
+    MCP tool with your role and a short severity. Only call these when clearly
+    warranted -- a small knock or mild tiredness does NOT need a tool call.
+"""
+
+def backup_baseline_profiles() -> str:
+    """Copies the current player profiles to baseline backup files (capturing LAB01 state)."""
+    try:
+        # VALID_ROLES is defined as a set in football_mcp_server, but we can define it locally
+        valid_roles = {"defender", "midfielder", "forward", "goalkeeper"}
+        for role in valid_roles:
+            src = os.path.join(PLAYER_STATE_DIR, f"{role}.json")
+            dst = os.path.join(PLAYER_STATE_DIR, f"{role}_baseline.json")
+            if os.path.exists(src):
+                shutil.copyfile(src, dst)
+        print("--> [SYSTEM] Captured LAB01 starting profiles as baseline backup.")
+        return "Success: Baseline backup created."
+    except Exception as e:
+        return f"Error backing up baseline: {str(e)}"
+
+def restore_baseline_profiles() -> str:
+    """Restores the player profiles from the baseline backup files, resetting mid-game shouts."""
+    try:
+        valid_roles = {"defender", "midfielder", "forward", "goalkeeper"}
+        for role in valid_roles:
+            src = os.path.join(PLAYER_STATE_DIR, f"{role}_baseline.json")
+            dst = os.path.join(PLAYER_STATE_DIR, f"{role}.json")
+            if os.path.exists(src):
+                shutil.copyfile(src, dst)
+                
+        # Also clear any active substitutions/injuries
+        sub_file = os.path.join(PLAYER_STATE_DIR, "substitutions.json")
+        if os.path.exists(sub_file):
+            try:
+                os.remove(sub_file)
+            except OSError:
+                pass
+            
+        print("--> [SYSTEM] Restored profiles to LAB01 starting baseline.")
+        return "Success: Restored to LAB01 starting baseline."
+    except Exception as e:
+        return f"Error restoring baseline: {str(e)}"

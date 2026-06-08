@@ -15,21 +15,17 @@ at  http://<host>:<port>/.well-known/agent-card.json
 """
 
 import os
-
 import uvicorn
+from dotenv import load_dotenv
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
+from football_agents.captain import captain_agent
 
-# Import as a package so the relative profile/MCP paths in agent.py resolve.
-try:
-    from football_agents.agent import captain_agent
-except ImportError:  # allow `python football_agents/captain_server.py` from repo root
-    import sys
-
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from football_agents.agent import captain_agent
+# Load environment variables from .env file
+load_dotenv()
 
 HOST = os.environ.get("CAPTAIN_HOST", "localhost")
 PORT = int(os.environ.get("CAPTAIN_PORT", "8001"))
+
 
 # Build the A2A Starlette app. `host`/`port` are baked into the published agent card.
 app = to_a2a(captain_agent, host=HOST, port=PORT)
