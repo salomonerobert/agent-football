@@ -101,9 +101,9 @@ We have broken the development into 5 progressive tasks. You will start with a s
 1.  Start the Coach server using your task file:
     ```bash
     cd repo/agent-football/LAB02
-    ../venv/bin/adk web task_agent.py
+    ../venv/bin/adk web task_agent.py --allow_origins='*'
     ```
-    *(Serves on `http://localhost:8000`).*
+    *(Serves on `http://localhost:8000`). If running in Google Cloud Shell, the `--allow_origins='*'` flag is required to bypass 403 Forbidden errors.*
 2.  Open `http://localhost:5173/` in your browser, click **Kick Off**.
 3.  Type `everyone attack` in the shout bar and click **Shout!**.
 4.  Verify in the **retro terminal** on the right that:
@@ -154,7 +154,7 @@ We have broken the development into 5 progressive tasks. You will start with a s
 #### 🚀 Verification:
 1.  Ensure both servers are running:
     *   Terminal 1: `python -m football_agents.task_captain_server` (port 8001)
-    *   Terminal 2: `adk web task_agent.py` (port 8000)
+    *   Terminal 2: `adk web task_agent.py --allow_origins='*'` (port 8000)
 2.  Refresh your browser and shout `everyone attack`.
 3.  Observe the **Live Agent Terminal** on the screen! You should see:
     *   `📣 Coach: "everyone attack"`
@@ -191,7 +191,7 @@ We have broken the development into 5 progressive tasks. You will start with a s
 #### 🚀 Verification:
 1.  Restart both servers:
     *   Terminal 1: `python -m football_agents.task_captain_server`
-    *   Terminal 2: `adk web task_agent.py`
+    *   Terminal 2: `adk web task_agent.py --allow_origins='*'`
 2.  Refresh the browser, type `everyone attack`, and click Shout.
 3.  Observe the terminal trace and game:
     *   The Captain delegates to all 4 players: `🎛️ Captain: Delegating to DEFENDER...`
@@ -214,7 +214,7 @@ We have broken the development into 5 progressive tasks. You will start with a s
 6.  *(Behind the scenes, `make_condition_toolset()` connects to our standalone FastMCP server `football_mcp_server.py` over stdio and exposes the `report_injury` and `request_substitution` tools to the players).*
 
 #### 🚀 Verification:
-1.  Restart your task Captain server and `adk web task_agent.py`.
+1.  Restart your task Captain server and `adk web task_agent.py --allow_origins='*'`.
 2.  Refresh the browser and start playing.
 3.  Every 30 seconds, the frontend automatically appends a **"Fitness Report"** to your background status checks, telling the Captain if any players are tired.
 4.  Wait for a player's stamina to drop.
