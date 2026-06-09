@@ -331,11 +331,26 @@ const shoutInput = document.getElementById('shout-message-input');
 const shoutBtn = document.getElementById('shout-send-btn');
 
 let currentSessionId = null;
-
 let currentHuddleData = null;
+let isRequestInProgress = false;
 
 async function sendInstructionToAgent(msg, options = {}) {
   const { showHuddle = true } = options;
+  
+  if (isRequestInProgress) {
+    if (!showHuddle) {
+      console.log("Skipping periodic status check: another request is in progress.");
+      return;
+    }
+    console.warn("Request already in progress. Ignoring shout.");
+    return;
+  }
+  
+  isRequestInProgress = true;
+  if (shoutBtn) shoutBtn.disabled = true;
+  if (shoutInput) shoutInput.disabled = true;
+  if (shoutBtn) shoutBtn.textContent = "Thinking...";
+  
   currentHuddleData = null; // Reset for this run
   
   try {
@@ -442,6 +457,11 @@ async function sendInstructionToAgent(msg, options = {}) {
   } catch (err) {
     console.error("Error communicating with agent:", err);
     appendTerminalLine("system", `> ❌ Error: ${err.message}`);
+  } finally {
+    isRequestInProgress = false;
+    if (shoutBtn) shoutBtn.disabled = false;
+    if (shoutInput) shoutInput.disabled = false;
+    if (shoutBtn) shoutBtn.textContent = "Shout!";
   }
 }
 
