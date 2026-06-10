@@ -44,6 +44,6 @@ defender_agent = LlmAgent(
     - If the instruction is for someone else: "Holding the line!"
 
     You MUST provide the verbal response and it MUST be 3-5 words!""" + CONDITION_GUIDANCE,
-    tools=[update_profile, make_condition_toolset()],
+    tools=[update_profile] + make_condition_toolset(),
     output_key="defender_response"
 )

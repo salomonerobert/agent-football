@@ -331,11 +331,29 @@ const shoutInput = document.getElementById('shout-message-input');
 const shoutBtn = document.getElementById('shout-send-btn');
 
 let currentSessionId = null;
-
 let currentHuddleData = null;
+let isRequestInProgress = false;
 
 async function sendInstructionToAgent(msg, options = {}) {
   const { showHuddle = true } = options;
+  const isBackground = !showHuddle;
+  
+  if (isRequestInProgress) {
+    if (isBackground) {
+      console.log("Skipping periodic status check: another request is in progress.");
+      return;
+    }
+    console.warn("Request already in progress. Ignoring shout.");
+    return;
+  }
+  
+  isRequestInProgress = true;
+  if (!isBackground) {
+    if (shoutBtn) shoutBtn.disabled = true;
+    if (shoutInput) shoutInput.disabled = true;
+    if (shoutBtn) shoutBtn.textContent = "Thinking...";
+  }
+  
   currentHuddleData = null; // Reset for this run
 
   try {
@@ -419,7 +437,7 @@ async function sendInstructionToAgent(msg, options = {}) {
           if (!jsonStr) continue;
           try {
             const event = JSON.parse(jsonStr);
-            processAgentEvent(event);
+            processAgentEvent(event, { showHuddle });
           } catch (err) {
             // Silent catch for partial or malformed chunks
           }
@@ -442,17 +460,33 @@ async function sendInstructionToAgent(msg, options = {}) {
   } catch (err) {
     console.error("Error communicating with agent:", err);
     appendTerminalLine("system", `> ❌ Error: ${err.message}`);
+  } finally {
+    isRequestInProgress = false;
+    if (!isBackground) {
+      if (shoutBtn) shoutBtn.disabled = false;
+      if (shoutInput) shoutInput.disabled = false;
+      if (shoutBtn) shoutBtn.textContent = "Shout!";
+    }
   }
 }
 
 // 📟 Helper to parse and log agent events to the terminal in real-time
-function processAgentEvent(event) {
+function processAgentEvent(event, options = {}) {
+  const { showHuddle = true } = options;
+
   // Log the raw event to the console for debugging A2A stream contents
   console.log("[Stream Event]", event);
 
+  // Helper to append terminal line only if it's not a background request
+  const printLine = (type, text) => {
+    if (showHuddle) {
+      appendTerminalLine(type, text);
+    }
+  };
+
   // 🔴 Handle backend errors (e.g., stale session) gracefully by invalidating the session ID
   if (event.error) {
-    appendTerminalLine("system", `> ❌ Session Error: ${event.error}`);
+    printLine("system", `> ❌ Session Error: ${event.error}`);
     console.warn("Session error detected. Invalidating currentSessionId.");
     currentSessionId = null; // Force a fresh session on the next shout
     return;
@@ -464,7 +498,7 @@ function processAgentEvent(event) {
 
   // 1. Check for A2A Transfer (Coach -> Captain)
   if (author === "ManagerAgent" && actions && actions.transferToAgent === "team_captain") {
-    appendTerminalLine("coach", `🔗 Coach: Relayed to Team Captain over A2A!`);
+    printLine("coach", `🔗 Coach: Relayed to Team Captain over A2A!`);
     return;
   }
 
@@ -476,7 +510,7 @@ function processAgentEvent(event) {
           const call = part.functionCall;
           const targetRole = call.name.replace("Specialist", "").toLowerCase();
           const instruction = call.args.instruction || "";
-          appendTerminalLine("captain", `🎛️ Captain: Delegating to ${targetRole.toUpperCase()} ➔ "${instruction}"`);
+          printLine("captain", `🎛️ Captain: Delegating to ${targetRole.toUpperCase()} ➔ "${instruction}"`);
         }
       }
     }
@@ -493,11 +527,11 @@ function processAgentEvent(event) {
           const call = part.functionCall;
           if (call.name === "update_profile") {
             const changes = JSON.stringify(call.args.changes);
-            appendTerminalLine(role, `🛡️ ${author}: Calling update_profile tool ➔ ${changes}`);
+            printLine(role, `🛡️ ${author}: Calling update_profile tool ➔ ${changes}`);
           } else if (call.name === "report_injury") {
-            appendTerminalLine(role, `⚠️ ${author} (MCP): Reported injury! Severity: "${call.args.severity || 'knock'}"`);
+            printLine(role, `⚠️ ${author} (MCP): Reported injury! Severity: "${call.args.severity || 'knock'}"`);
           } else if (call.name === "request_substitution") {
-            appendTerminalLine(role, `🔁 ${author} (MCP): Requested substitution! Reason: "${call.args.reason || 'tired'}"`);
+            printLine(role, `🔁 ${author} (MCP): Requested substitution! Reason: "${call.args.reason || 'tired'}"`);
           }
         }
 
@@ -506,7 +540,7 @@ function processAgentEvent(event) {
           const text = part.text.trim();
           // Skip if it's the final JSON huddle
           if (!text.startsWith("{")) {
-            appendTerminalLine(role, `💬 ${author}: "${text}"`);
+            printLine(role, `💬 ${author}: "${text}"`);
           }
         }
       }
@@ -524,9 +558,9 @@ function processAgentEvent(event) {
             const parsed = JSON.parse(text);
             if (parsed.huddle) {
               currentHuddleData = parsed.huddle;
-              appendTerminalLine("captain", `📋 Captain: Huddle assembled!`);
+              printLine("captain", `📋 Captain: Huddle assembled!`);
               Object.entries(currentHuddleData).forEach(([player, quote]) => {
-                appendTerminalLine("system", `   └─ ${player.toUpperCase()}: "${quote}"`);
+                printLine("system", `   └─ ${player.toUpperCase()}: "${quote}"`);
               });
             }
           } catch (e) {

@@ -380,15 +380,15 @@ export class SoccerGameScene extends Phaser.Scene {
     if (!this.blueProfiles || !this.redProfiles) {
       const hardcodedDefaults = {
         defender: {
-          speed: 210, tackleRadius: 65, tackleCooldown: 800, passProbability: 0.75, passRange: 420, shotPower: 0.6, shotRange: 300, aggression: 0.6, defensePositioning: 0.8, attackPositioning: 0.3, decisionDelay: 150,
+          speed: 150, tackleRadius: 65, tackleCooldown: 800, passProbability: 0.75, passRange: 420, shotPower: 0.6, shotRange: 300, aggression: 0.4, defensePositioning: 0.8, attackPositioning: 0.3, decisionDelay: 150,
           pressingIntensity: 0.3, formationDiscipline: 0.9, passRiskTolerance: 0.2, dribbleTendency: 0.1, recoverySpeedMultiplier: 1.2, supportRunFrequency: 0.2, widthPreference: 0.3, interceptionRadius: 80, foulProbability: 0.3, counterAttackUrgency: 0.2
         },
         midfielder: {
-          speed: 235, tackleRadius: 50, tackleCooldown: 1000, passProbability: 0.85, passRange: 500, shotPower: 0.75, shotRange: 500, aggression: 0.75, defensePositioning: 0.5, attackPositioning: 0.6, decisionDelay: 100,
+          speed: 180, tackleRadius: 50, tackleCooldown: 1000, passProbability: 0.85, passRange: 500, shotPower: 0.75, shotRange: 500, aggression: 0.75, defensePositioning: 0.5, attackPositioning: 0.6, decisionDelay: 100,
           pressingIntensity: 0.6, formationDiscipline: 0.6, passRiskTolerance: 0.6, dribbleTendency: 0.5, recoverySpeedMultiplier: 1.1, supportRunFrequency: 0.7, widthPreference: 0.5, interceptionRadius: 60, foulProbability: 0.2, counterAttackUrgency: 0.6
         },
         forward: {
-          speed: 260, tackleRadius: 40, tackleCooldown: 1200, passProbability: 0.3, passRange: 380, shotPower: 0.95, shotRange: 700, aggression: 0.9, defensePositioning: 0.2, attackPositioning: 0.9, decisionDelay: 50,
+          speed: 200, tackleRadius: 40, tackleCooldown: 1200, passProbability: 0.3, passRange: 380, shotPower: 0.95, shotRange: 700, aggression: 0.9, defensePositioning: 0.2, attackPositioning: 0.9, decisionDelay: 50,
           pressingIntensity: 0.8, formationDiscipline: 0.3, passRiskTolerance: 0.4, dribbleTendency: 0.85, recoverySpeedMultiplier: 1.0, supportRunFrequency: 0.9, widthPreference: 0.8, interceptionRadius: 30, foulProbability: 0.1, counterAttackUrgency: 0.9
         },
         goalkeeper: {

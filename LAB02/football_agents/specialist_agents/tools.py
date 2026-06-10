@@ -204,21 +204,47 @@ def update_profile(role: str, changes: dict) -> str:
         return f"File error: {str(e)}"
 
 
-def make_condition_toolset() -> McpToolset:
+USE_REAL_MCP_SERVER = False
+
+def dummy_report_injury(role: str, severity: str = "knock") -> str:
+    """Report that a player has sustained an injury.
+    
+    Args:
+        role: The role of the player injured (e.g. 'forward', 'defender')
+        severity: How bad the injury is (e.g. 'knock', 'pulled hamstring')
+    """
+    print(f"--> [DUMMY MCP] {role.upper()} reported an injury ({severity}).")
+    return f"Successfully logged injury for {role}: {severity}"
+
+def dummy_request_substitution(role: str, reason: str = "tired") -> str:
+    """Request a substitution for a player.
+    
+    Args:
+        role: The role of the player to be substituted (e.g. 'forward', 'midfielder')
+        reason: Why the sub is needed (e.g. 'tired', 'tactical')
+    """
+    print(f"--> [DUMMY MCP] {role.upper()} requested a substitution ({reason}).")
+    return f"Successfully logged substitution request for {role}: {reason}"
+
+def make_condition_toolset() -> list:
     """Build an MCP toolset (stdio) exposing the injury/substitution tools.
 
     A fresh toolset per player keeps each agent's MCP session isolated. The
     server is spawned on demand with the same Python interpreter running ADK.
     """
-    return McpToolset(
-        connection_params=StdioConnectionParams(
-            server_params=StdioServerParameters(
-                command=sys.executable,
-                args=[MCP_SERVER_PATH],
+    if USE_REAL_MCP_SERVER:
+        toolset = McpToolset(
+            connection_params=StdioConnectionParams(
+                server_params=StdioServerParameters(
+                    command=sys.executable,
+                    args=[MCP_SERVER_PATH],
+                ),
             ),
-        ),
-        tool_filter=["report_injury", "request_substitution"],
-    )
+            tool_filter=["report_injury", "request_substitution"],
+        )
+        return [toolset]
+    else:
+        return [dummy_report_injury, dummy_request_substitution]
 
 
 # Shared guidance appended to every outfield player about self-reporting condition.
