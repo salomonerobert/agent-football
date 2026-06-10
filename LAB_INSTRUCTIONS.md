@@ -98,10 +98,13 @@ To build this real-time agentic game, you will work with the following technolog
 
 Before starting the implementation, you must set up your Python virtual environment and Google Cloud permissions.
 
-### Task 1: Clone the Git Repository & Activate Virtual Environment
+![[/fragments/cloudshelleditortab]]
 
-1. Open your terminal, navigate to your workspace directory, and run the following command to clone the code:
+### Step 1 :  Clone the Git Repository & Activate Virtual Environment
+
+1. In Cloud Shell terminal, navigate to your workspace directory, and run the following command to clone the code:
     ```bash
+    cd ~
     git clone https://github.com/salomonerobert/agent-football.git
     ```
 
@@ -110,25 +113,29 @@ Before starting the implementation, you must set up your Python virtual environm
     cd agent-football
     ```
 
-3. Activate the pre-configured virtual environment:
+3. Create and activate a python virtual environment:
     ```bash
+    python3 -m venv venv
     source venv/bin/activate
     ```
-
-4. Copy the environment template to create your `.env` configuration:
+4. Install dependencies to start your first lab
     ```bash
-    gcp .env.example .env
+    pip install -r LAB01/requirements.txt
     ```
 
-5. Open the `.env` file and verify or fill in your Google Cloud project details:
+5. Copy the environment template to create your `.env` configuration:
+    ```bash
+    cp .env.example .env
+    ```
+
+6. Open the `.env` file and fill in the google cloud project id provisioned for you in this lab
     ```ini
     GOOGLE_GENAI_USE_VERTEXAI=true
     GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
-    GOOGLE_CLOUD_LOCATION=us-central1
     ```
 
 
-### Task 2: Enable the Vertex AI API in Google Cloud
+### Step 2: Enable the Vertex AI API in Google Cloud
 
 To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex AI API for your project and establish credentials.
 
@@ -145,7 +152,7 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
 
 ---
 
-## 3. LAB01: Avatar Creation & Style Consistent Chat Sessions
+## LAB01: Avatar Creation & Style Consistent Chat Sessions
 
 In this section, you will write the backend code to communicate with Gemini for spritesheet generation.
 
@@ -161,37 +168,40 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 ---
 
-## Step 1: Initialize the Gemini Client
-*   **File to edit**: `LAB01/app.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 1 - Initialize the Gemini Client`.
-*   **Code to fill in**:
+## TASK 1: Initialize the Gemini Client
+*   Under file `LAB01/app.py` review the comment `# TODO: Task 1`
+*   **Objective**: Initialize the official Google GenAI SDK client. By default, the client constructor would read your environment credentials (such as the `GOOGLE_CLOUD_PROJECT` you configured in your `.env` file) to authenticate your connection to Gemini
+
+*   **Hint**: Use `genai.Client()` to initialize the Gemini client
+*   **Solution**:
     ```python
     client = genai.Client()
     ```
-*   **What this code does**: This initializes the official Google GenAI SDK client. By default, the client constructor reads your environment credentials (such as the `GOOGLE_CLOUD_PROJECT` you configured in your `.env` file) to authenticate your connection to Gemini.
 
 ---
 
-## Step 2: Create a Style-Consistent Chat Session
-*   **File to edit**: `LAB01/app.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 2 - Create a style-consistent chat session`.
-*   **Code to fill in**:
+## TASK 2: Create a Chat Session which preserves the context of generated assets
+*   Under file `LAB01/app.py` locate and review the comment `# TODO: Task 2`
+*   **Objective**: Create a new asynchronous chat session using the image generation model (gemini-3.1-flash-image). Creating a chat session preserves the context and history of generated assets, which ensures the player and goalkeeper models align in jersey styling and color values.
+
+*   **Solution**:
     ```python
     chat = client.aio.chats.create(model="publishers/google/models/gemini-3.1-flash-image")
     ```
-*   **What this code does**: This creates a new asynchronous chat session using the image generation model (code-named **Nanobanana**). Creating a chat session preserves the context and history of generated assets, which ensures the player and goalkeeper models align in jersey styling and color values.
+
 
 ---
 
-## Step 3: Request the Image Modality in Chat
-*   **File to edit**: `LAB01/app.py`
-*   **ToDo to look for**: Locate the comments `# TODO: Task 3a - Generate the Outfield Player Spritesheet` and `# TODO: Task 3b - Generate the Goalkeeper Spritesheet (Style Consistent)`.
-*   **Code to fill in**:
-    Fill in these blocks using tabbed components:
+## TASK 3: Request the Image Modality in Chat
+*   Under file `LAB01/app.py` locate and review the comment `# TODO: Task 3a` and `# TODO: Task 3b`
+*   **Objective** : By default, the Gemini SDK is configured for text-based responses. To generate images instead, you must explicitly request image modality and configure image-specific parameters in the `GenerateContentConfig`. Instruct SDK to return an `IMAGE` response format in a `16:9` aspect ratio for both tasks. 
+
+*   **Solutions**:
+    Click on each tab to view solutions:
 
 <ql-code>
 
-  <ql-code-block language="python" tabTitle="Outfield Player generation (Task 3a)">
+  <ql-code-block language="python" tabTitle="Task 3a">
   response = await chat.send_message(
       player_prompt,
       config=types.GenerateContentConfig(
@@ -201,7 +211,7 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
   )
   </ql-code-block>
 
-  <ql-code-block language="python" tabTitle="Goalkeeper generation (Task 3b)">
+  <ql-code-block language="python" tabTitle="Task 3b">
   response = await chat.send_message(
       gk_prompt,
       config=types.GenerateContentConfig(
@@ -213,24 +223,13 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 </ql-code>
 
-*   **What this code does**: Sends the player and goalkeeper prompts to the active chat session. The configuration parameters instruct the SDK to return an `IMAGE` response format in a `16:9` aspect ratio. Because both run sequentially in the same chat session, the Goalkeeper inherits the outfield player's style.
+
+*   **Hint**: You just sent the player and goalkeeper prompts to the active chat session. Because both run sequentially in the same chat session, the Goalkeeper inherits the outfield player's style.
 
 ---
 
-## Step 4: Prompt Engineering Sandbox
-*   **File to edit**: `LAB01/prompts.py`
-*   **ToDo to look for**: Locate the functions `get_player_prompt` and `get_goalkeeper_prompt`.
-*   **Code to fill in**:
-    Update the prompt functions to specify the exact grid format required by the Phaser engine:
-    ```python
-    def get_player_prompt(color: str, logo: str, style: str) -> str:
-        return f"A pixel art spritesheet of a football player wearing a {color} jersey with a {logo} logo, in style: {style}. The spritesheet must consist of a single horizontal row containing exactly 4 frames showing running and kicking actions. The background must be solid, uniform neon green (#00FF00) with no details."
-    ```
-*   **What this code does**: Standardizes your prompt generation to ensure that the image returned by Gemini is laid out on a clean horizontal grid with a solid neon green background (`#00FF00`) so the frontend engine can easily key out (remove) the background.
+## TASK 4: Run the Onboarding Server & Save Starting Profiles
 
----
-
-## Step 4.5: Run the Onboarding Server & Save Starting Profiles
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
@@ -246,6 +245,15 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 5. Once your player spritesheets generate successfully, click **Configure Player Profiles ➡️**.
 6. Tweak the default behavior sliders (e.g. speed, positioning) for each player, then click **💾 Save Player Profiles** to write your starting configurations to disk.
 
+---
+## LAB01 Verification
+
+In order to verify the artifacts you have generated for your play, check the following paths in your workspace
+
+1. LAB02/public/player_state/<player>.json files :  These files should reflect the configured player persona.
+2. LAB02/public/assets/sprites/player_<team_color>.png and LAB02/public/assets/sprites/golakeeper_<team_color>.png should reflect the avatars you created.
+
+Now that we have our playground set, let's move on to the next step.
 ---
 
 ### 🧩 LAB01 Checkpoint Questions
@@ -285,40 +293,43 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 
 ---
 
-## 4. LAB02: Creating the A2A (Agent-to-Agent) Servers
-
-![Agentic Football Simulation Pitch](img/banner.png)
+## LAB02: Creating the A2A (Agent-to-Agent) Servers
 
 In `LAB02`, we will split our monolithic Coach setup into a distributed network of agents communicating over standard A2A (Agent-to-Agent) and MCP protocols.
 
 ---
 
-## Step 5: Write a Simple Direct Response Prompt for the Coach
-*   **File to edit**: `LAB02/football_agents/agent.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 1 - Write a simple direct response prompt for the Coach`.
-*   **Code to fill in**:
-    Inside the `coach_agent` definition, locate the `instruction` prompt block:
+## TASK 1: Give the coach some light-hearted TACTICAL SHOUT instructions
+*   Under file `LAB02/football_agents/agent.py` locate and review the comment `# TODO: Task 1`
+*   **Objective** : At this stage, the Coach is a "monolith" agent, meaning it responds directly to user shouts using a humorous response format. Instruct the coach to respond directly to tactical shouts with a funny, encouraging quote (e.g. "Alright lads, let's attack!").
+
+*   **Solution**:
+    
     ```python
     instruction="""You are the head coach on the touchline. 
     
-    CRITICAL SYSTEM INSTRUCTIONS (Do not modify):
-    1. If you receive the exact message 'BACKUP_BASELINE', you MUST immediately call the `backup_baseline_profiles` tool and return its response.
-    2. If you receive the exact message 'RESTORE_BASELINE', you MUST immediately call the `restore_baseline_profiles` tool and return its response.
+    ... existing instructions...
     
-    TACTICAL SHOUTS (Task 1):
+    TACTICAL SHOUTS:
     For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging 1-sentence shout! Do NOT call any sub-agents yet."""
     ```
-*   **What this code does**: Sets up the initial Coach Agent system instruction prompt. At this stage, the Coach is a "monolith" that responds to user shouts directly using a humorous response format.
 
 ---
 
-## Step 6: Define and Expose the Captain Agent (A2A Server)
-In this step, you will wrap the captain agent as a standalone HTTP microservice listening on port `8001`.
+## TASK 2: Define and Expose the Captain Agent (A2A Server)
+
+After monolith coach, lets create our first A2A server for the captain agent. In this step, you will wrap the captain agent as a standalone A2A server listening on port `8001`.
 
 #### Task 2a: Define the Captain Agent
-*   **File to edit**: `LAB02/football_agents/captain.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 2 - Define the Captain Agent`.
-*   **Code to fill in**:
+*   Under file `LAB02/football_agents/captain.py` locate and review the comment `# TODO: Task 2a`
+*   **Objective** : You are required to define the captain agent who would be responsible of relaying coach instructions to the players. But since its just the beginning, lets keep it simple. Lets create a standalone agent that responds to coach instructions with a simple players-style greeting.
+*   **Hint** : 
+    1. Initialize `captain_agent` as an LlmAgent.
+    2. Set name="TeamCaptain" 
+    3. Set model=GeminiConstants.GEMINI_FLASH_LITE.
+    4. Write a simple starting instruction (e.g. "You are the captain. Respond to shouts with a player-style greeting.").
+
+*   **Solution**:
     ```python
     captain_agent = LlmAgent(
         name="TeamCaptain",
@@ -328,20 +339,28 @@ In this step, you will wrap the captain agent as a standalone HTTP microservice 
     )
     ```
 
+Exciting stuff !! We have a captain now; but the coach does not yet have a way to reach out to this captain agent. We need to make our new little agent, discoverable by the coach agent. 
+This is where A2A comes into play. We can wrap our A2A server to expose our agent on a port, such that coach agent can reach out to it. But we're not there yet; first let us import the necessary utilities
+
 #### Task 2b: Import ADK A2A and Uvicorn Utilities
-*   **File to edit**: `LAB02/football_agents/captain_server.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 2b - Import ADK A2A and Uvicorn utilities`.
-*   **Code to fill in**:
+*   Under file `LAB02/football_agents/captain_server.py` look for `# TODO: Task 2b`
+*   **Objective** : Import the necessary utilities to wrap the captain agent as a standalone A2A server.
+
+*   **Solution**:
     ```python
     from google.adk.a2a.utils.agent_to_a2a import to_a2a
     import uvicorn
     from football_agents.captain import captain_agent
     ```
 
-#### Task 2c: Build the A2A Starlette App and Run the Server
-*   **File to edit**: `LAB02/football_agents/captain_server.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 2c - Build the A2A Starlette app and run the server`.
-*   **Code to fill in**:
+#### TASK 2c: Build and Run the A2A Agent 
+*   Under file `LAB02/football_agents/captain_server.py` locate and review the comment `# TODO: Task 2c`
+*   **Objective** : Wrap your `captain_agent` into a network-reachable Starlette application using the ADK A2A library. Then serve the agent card and endpoints over port `8001`.
+        1. Retrieve HOST and PORT from environment (default to "localhost" and 8001).
+        2. Use `to_a2a` to convert the `captain_agent` into an app, passing host and port.
+        3. In the `__main__` block, use `uvicorn.run` to start the server.
+
+*   **Solution**:
     ```python
     HOST = os.environ.get("CAPTAIN_HOST", "localhost")
     PORT = int(os.environ.get("CAPTAIN_PORT", "8001"))
@@ -351,17 +370,24 @@ In this step, you will wrap the captain agent as a standalone HTTP microservice 
     if __name__ == "__main__":
         uvicorn.run(app, host=HOST, port=PORT)
     ```
-*   **What this code does**: Converts your `captain_agent` into a network-reachable Starlette application using the ADK A2A library. It serves the agent card and endpoints over port `8001`.
 
 ---
 
-## Step 7: Connect the Coach Agent to the Remote Captain (A2A)
-Now, you will configure the Coach agent to stop responding directly and instead delegate to the Captain over the network.
+This is going to be fun !! Now we have a coach and a captain, and both are standing on different physical or virtual machines, but wait.. how will they talk to each other ?
 
-#### Task 3a: Define the Remote Captain Agent (A2A)
-*   **File to edit**: `LAB02/football_agents/agent.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 3a - Define the Remote Captain Agent (for Task 3)`.
-*   **Code to fill in**:
+## TASK 3: Build the Coach-Captain Bridge (A2A)
+Now, you will configure the Coach agent to stop responding directly and instead delegate instructions to the Captain over the network.
+
+#### Task 3a: Connect the coach with captain
+*   Under `LAB02/football_agents/agent.py` locate and review `# TODO: Task 3a `
+*   **Objective** : Define the remote captain agent in the coach agent.
+
+*   **Hint** : 
+    1. Create a RemoteA2aAgent
+    2. Set the name to "team_captain", description to "The team captain, reachable over the A2A protocol.", and agent_card to the `CAPTAIN_A2A_URL`
+    3. `CAPTAIN_A2A_URL` is defined as `http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}`
+
+*   **Solution**:
     ```python
     from google.adk.agents.remote_a2a_agent import RemoteA2aAgent, AGENT_CARD_WELL_KNOWN_PATH
 
@@ -373,82 +399,135 @@ Now, you will configure the Coach agent to stop responding directly and instead 
         agent_card=CAPTAIN_A2A_URL,
     )
     ```
+Now that the coach can "reach" captain; lets modify our coach instruction to delegate the tactical shouts to the captain instead of responding directly.
 
-#### Task 3b: Update Coach Prompt to Relay to the Captain
-*   **File to edit**: `LAB02/football_agents/agent.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 3b - Update prompt to relay to the Captain (for Task 3)`.
-*   **Code to fill in**:
-    Update the Coach Agent instructions and add the Captain to the `sub_agents` list:
+#### TASK 3b: Update Coach Prompt to now start relaying instructions to the Captain
+*   Under `LAB02/football_agents/agent.py` locate and review `# TODO: Task 3b`
+*   **Objective** : 
+    1. Update the Coach Agent instructions to delegate instructions to the Captain over the network. Don't remove the code to backup and restore profiles, it should still work as is.
+    2. Add the captain to the `sub_agents` list.
+
+*   **Solution**:
     ```python
     coach_agent = LlmAgent(
         name="ManagerAgent",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="The head coach: handles baseline backups/resets and shouts.",
-        instruction="""You are the Head Coach of the football team.
+        instruction="""You are the head coach on the touchline. 
+        
+        CRITICAL SYSTEM INSTRUCTIONS (Do not modify):
+        1. If you receive the exact message 'BACKUP_BASELINE', you MUST immediately call the `backup_baseline_profiles` tool and return its response.
+        2. If you receive the exact message 'RESTORE_BASELINE', you MUST immediately call the `restore_baseline_profiles` tool and return its response.
+        
+        TACTICAL SHOUTS:
         When you receive a tactical shout from the user, you MUST immediately transfer control
         to your `team_captain` sub-agent. Do NOT attempt to answer the shout yourself!""",
+        
         tools=[backup_baseline_profiles, restore_baseline_profiles],
-        sub_agents=[team_captain_remote]
+        sub_agents=[team_captain_remote],
     )
     ```
-*   **What this code does**: Connects the Coach and Captain over the A2A network layer. The prompt tells the Coach to act as a pure relay, immediately routing strategy commands to the Captain.
-
 ---
 
-## Step 8: Define Player Specialists & Attribute Mapping
-In this step, we will define specialist player agents and equip them with the `update_profile` tool.
+We have Coach and Captain ready and talking to each other, but they are not yet talking to the players. In the next step, we will define specialist player agents and equip them with the `update_profile` tool.
 
-#### Task 4a: Define the Specialist Agents
-*   **Files to edit**:
+## TASK 4: Define Player Specialists & Attribute Mapping
+
+#### TASK 4a: Define the Specialist Player Agents
+*   Under each of the following files, locate and review the comment `# TODO: Task 4a`
     *   `LAB02/football_agents/specialist_agents/defender.py`
     *   `LAB02/football_agents/specialist_agents/midfielder.py`
     *   `LAB02/football_agents/specialist_agents/forward.py`
     *   `LAB02/football_agents/specialist_agents/goalkeeper.py`
-*   **ToDo to look for**: Locate the comment `# TODO: Task 4a - Define the Defender Agent` (in defender.py, midfielder.py, forward.py, and goalkeeper.py).
-*   **Code to fill in**:
-    Here is the template for `defender.py`:
+
+*   **Objective**: Creates LlmAgent instances for all 4 player roles. The player instructions teach Gemini how to parse qualitative strategies and map them to physical game parameters using the `update_profile` tool.
+
+    
+*   **Solution**:
+    Here is the template for `defender.py`. *(Implement similar definitions in `midfielder.py`, `forward.py`, and `goalkeeper.py` using their specific role attributes noted in the files).*
+
     ```python
     defender_agent = LlmAgent(
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="Handles tactical instructions and attribute updates for the DEFENDER role.",
-        instruction="""You are a gritty Defender. When the captain relays an instruction,
-        if it is general or defender-related, use the `update_profile` tool to adjust:
-        - defensePositioning (0.0-1.0; set to 0.9 if defending)
-        - aggression (0.0-1.0)
-        - speed (0.0-1.0)
-        Output a quirky 3-5 word player affirmative reaction.""",
+        instruction="""You are a gritty, no-nonsense Defender on the football pitch.
+        The team captain is relaying an instruction to you. If the instruction is general (e.g., 'everyone attack', 'play aggressively') or specifically for defenders, use the `update_profile` tool to update the 'defender' role attributes.
+        If the instruction is explicitly ONLY for another role (e.g., 'forwards only, shoot more'), do NOT use the tool.
+
+        IMPORTANT: You must affect ALL attributes that logically align with the command, rather than just modifying one or two.
+        Here are the ONLY attributes that affect gameplay. Write values in the ranges noted; do NOT invent other keys.
+        - speed (0.0-1.0 multiplier on base pace)
+        - aggression (0.0-1.0; chance to join the press when the opponent has the ball)
+        - .... <all other attributes available in defender.json>
+
+
+        CRITICAL INSTRUCTION:
+        Step 1. Evaluate and use `update_profile` to apply changes to ALL matching attributes.
+        Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
+
+        Examples for Step 2:
+        - If asked to attack/go forward: "Going up, boss!"
+        - If asked to defend/fall back: "Parking the bus!"
+        - If the instruction is for someone else: "Holding the line!"
+
+        You MUST provide the verbal response and it MUST be 3-5 words!""",
+
         tools=[update_profile],
         output_key="defender_response"
     )
     ```
-    *(Implement similar definitions in `midfielder.py`, `forward.py`, and `goalkeeper.py` using their specific role attributes noted in the files).*
-*   **What this code does**: Creates LlmAgent instances for all 4 player roles. The player instructions teach Gemini how to parse qualitative strategies and map them to physical game parameters using the `update_profile` tool.
-
+    
 ---
 
-## Step 9: Connect Specialists to the Captain Agent
-Here, you will import the specialists and register them as tools under the Captain agent.
+Now that all player agents have been defined and are ready to go, next step is to connect them to the captain agent. You would have noticed that up until now none of the changes have touched the captain agent file. We have kept it out intentionally to make the changes more manageable. We will now import and register these agents as tools to the captain agent.
 
-#### Task 4b: Register Specialist Agents and Orchestrate Captain
-*   **File to edit**: `LAB02/football_agents/captain.py`
-*   **ToDo to look for**: Locate the comments `# TODO: Task 4a - Import the Specialist Task Agents` and `# TODO: Task 4b - Equip Specialists & Write Orchestration Prompt`.
-*   **Code to fill in**:
+
+#### TASK 5a, 5b: Register Specialist Agents and Orchestrate Captain
+*   Under the file `LAB02/football_agents/captain.py` locate and review comment `# TODO: Task 5a` and `# TODO: Task 5b`
+*   **Objective**:
+    1. Import the specialist agents: `defender_agent`, `midfielder_agent`, `forward_agent`, and `goalkeeper_agent`.
+    2. Equip the captain agent with these specialists as tools (`AgentTool`).
+    3. Write a system instruction prompt that instructs the captain to delegate coach shouts to the appropriate specialist agents and compile their verbal responses into a strict JSON payload.
+
+*   **Solution**:
+
     ```python
-    # Task 4a
+    # Task 5a
     from google.adk.tools import AgentTool
     from football_agents.specialist_agents.defender import defender_agent
     from football_agents.specialist_agents.midfielder import midfielder_agent
     from football_agents.specialist_agents.forward import forward_agent
     from football_agents.specialist_agents.goalkeeper import goalkeeper_agent
 
-    # Task 4b
+    # Task 5b
     captain_agent = LlmAgent(
         name="TeamCaptain",
         model=GeminiConstants.GEMINI_FLASH_LITE,
-        instruction="""Relay coach shouts to the relevant players by calling their tools.
-        Gather their verbal responses and output ONLY a valid JSON:
-        { "status": "...", "huddle": { "defender": "...", "midfielder": "...", ... } }""",
+        description="Team captain who relays the coach's tactics to the individual players and reports back the huddle.",
+        instruction="""You are the on-pitch TEAM CAPTAIN. The head coach has shouted an instruction to you
+        (and may have attached a short fitness/tiredness report for some players).
+
+        Your job is to relay tactics DOWN to your teammates. You have one tool per player:
+        `DefenderSpecialist`, `MidfielderSpecialist`, `ForwardSpecialist`, `GoalkeeperSpecialist`.
+
+        STEP 1 — DELEGATE: Call the tool for EVERY player the instruction is relevant to (a general
+        instruction like "everyone attack" applies to all four). Pass each player a clear instruction in
+        their own words. 
+
+        STEP 2 — REPORT BACK: After gathering the players' short verbal responses, output ONLY a valid
+        JSON object with EXACTLY this structure (no markdown, no extra text):
+        {
+        "status": "Short confirmation that tactics were executed",
+        "huddle": {
+            "defender": "The defender's exact quote (or a brief stand-in if not addressed)",
+            "midfielder": "The midfielder's exact quote",
+            "forward": "The forward's exact quote",
+            "goalkeeper": "The goalkeeper's exact quote"
+        }
+        }
+        Every huddle key MUST be present. Use the players' actual returned quotes where you called them.""",
+
         tools=[
             AgentTool(defender_agent),
             AgentTool(midfielder_agent),
@@ -457,14 +536,12 @@ Here, you will import the specialists and register them as tools under the Capta
         ]
     )
     ```
-*   **What this code does**: Registers the specialist players as tools (`AgentTool`) under the Captain's namespace. The system prompt instructs Gemini to delegate shouts to specialists and compile their responses into a strict JSON payload.
-
 ---
 
-## Step 10: Autonomous Condition Reporting (FastMCP Integration) (Optional)
+## TASK 6: Autonomous Condition Reporting (FastMCP Integration) (Optional)
 This bonus step connects the player agents to an external Model Context Protocol (MCP) server so they can autonomously report injury and fatigue. **This step is optional and can be skipped if you want to focus purely on core agent orchestration.**
 
-#### Task 5a: Import MCP Utilities (Optional)
+#### Task 6a: Import MCP Utilities (Optional)
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
 *   **ToDo to look for**: Locate the comment `# TODO: Task 5a - Import MCP Utilities`.
 *   **Code to fill in**:
@@ -472,9 +549,9 @@ This bonus step connects the player agents to an external Model Context Protocol
     from .tools import make_condition_toolset, CONDITION_GUIDANCE
     ```
 
-#### Task 5b: Equip MCP Toolset & Prompt Guidance (Optional)
+#### Task 6b: Equip MCP Toolset & Prompt Guidance (Optional)
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
-*   **ToDo to look for**: Locate the comment `# TODO: Task 5b - Equip MCP Toolset & Prompt Guidance`.
+*   **ToDo to look for**: Locate the comment `# TODO: Task 6b - Equip MCP Toolset & Prompt Guidance`.
 *   **Code to fill in**:
     ```python
     defender_agent = LlmAgent(
@@ -486,7 +563,7 @@ This bonus step connects the player agents to an external Model Context Protocol
     )
     ```
 *   **What this code does**: Appends the MCP reporting guidelines to your player's instructions and equips the agent's toolbelt with `make_condition_toolset()`. This establishes a stdio-based JSON-RPC connection to the FastMCP server when running checkups.
-#### Task 5c: Enable the Real MCP Server (Optional)
+#### Task 6c: Enable the Real MCP Server (Optional)
 *   **File to edit**: `LAB02/football_agents/specialist_agents/tools.py`
 *   **Code to change**:
     Locate the `USE_REAL_MCP_SERVER` flag and toggle it to `True` to instruct the toolset builder to spawn the real stdio-based FastMCP server subprocess:
@@ -497,14 +574,16 @@ This bonus step connects the player agents to an external Model Context Protocol
 
 ---
 
+We are at the last leg of this lab. We will now try to launch and test the simulation.
 
-## Step 11: Launch and Test the Simulation
+## TASK 7: Verification
 
 To launch the multi-agent simulation workspace:
 
-1.  Navigate to the `LAB02` directory:
+1.  Navigate to the `LAB02` directory. Make sure you are in the virtual environment we created earlier
     ```bash
     cd LAB02
+    pip install -r football_agents/requirements.txt
     ```
 2.  Start the consolidated startup script:
     ```bash

@@ -51,15 +51,6 @@ cleanup() {
 # Trap SIGINT (Ctrl+C) and SIGTERM to clean up all spawned processes
 trap cleanup SIGINT SIGTERM
 
-# In task mode, temporarily swap task_agent.py to agent.py
-# so that the adk web scanner registers the single agent under the correct directory name 'football_agents'
-if [ "$MODE" == "task" ]; then
-    if [ -f "football_agents/task_agent.py" ]; then
-        echo "--> Temporarily swapping task_agent.py to agent.py..."
-        mv football_agents/agent.py football_agents/agent.py.bak
-        cp football_agents/task_agent.py football_agents/agent.py
-    fi
-fi
 
 # Clean up any stale local ADK SQLite databases / session cache to prevent lock/corruption errors
 if [ -d ".adk" ]; then
@@ -71,11 +62,7 @@ echo "Starting LAB02 services in MODE: $MODE..."
 
 # 1. Start Captain Server
 echo "--> Starting Team Captain A2A Server..."
-if [ "$MODE" == "task" ]; then
-    python3 -m football_agents.task_captain_server &
-else
-    python3 -m football_agents.captain_server &
-fi
+python3 -m football_agents.captain_server &
 PIDS+=($!)
 
 # Wait a brief moment for A2A port registration
@@ -94,6 +81,7 @@ sleep 2
 # 3. Start Frontend
 echo "--> Starting Frontend server (Vite)..."
 cd frontend
+npm install &
 npm run dev &
 PIDS+=($!)
 cd ..

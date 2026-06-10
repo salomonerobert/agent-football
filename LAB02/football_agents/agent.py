@@ -43,25 +43,25 @@ coach_agent = LlmAgent(
     name="ManagerAgent",
     model=GeminiConstants.GEMINI_FLASH_LITE,
     description="The head coach: handles baseline backups/resets and shouts.",
-    
-    # TODO: Task 1 - Write a simple direct response prompt for the Coach
-    # Instruct the coach to respond directly to tactical shouts with a funny,
-    # encouraging quote (e.g. "Alright lads, let's attack!").
-    #
-    # TODO: Task 3b - Update prompt to relay to the Captain (for Task 3)
-    # Once you reach Task 3, rewrite this prompt to instruct the Coach to
-    # IMMEDIATELY transfer control to the `team_captain` sub-agent.
     instruction="""You are the head coach on the touchline. 
     
     CRITICAL SYSTEM INSTRUCTIONS (Do not modify):
     1. If you receive the exact message 'BACKUP_BASELINE', you MUST immediately call the `backup_baseline_profiles` tool and return its response.
     2. If you receive the exact message 'RESTORE_BASELINE', you MUST immediately call the `restore_baseline_profiles` tool and return its response.
     
-    TACTICAL SHOUTS (Task 1):
-    For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging 1-sentence shout! Do NOT call any sub-agents yet.""",
+    TACTICAL SHOUTS :
+    # TODO: Task 1 - Write a simple direct response prompt for the Coach
+    # Instruct the coach to respond directly to tactical shouts with a funny,
+    # encouraging quote (e.g. "Alright lads, let's attack!").
+
+        
+    # TODO: Task 3b : Rewrite the TACTICAL SHOUT instruction for the Coach to 
+    IMMEDIATELY transfer control to the `team_captain` sub-agent.
+    
+    """,
     
     tools=[backup_baseline_profiles, restore_baseline_profiles],
-    sub_agents=[], # 👈 Task 3: Add [team_captain_remote] here when you reach Task 3!
+    sub_agents=[], # TODO: Task 3c : Add [team_captain_remote] here 
 )
 
 root_agent = coach_agent
