@@ -117,9 +117,9 @@ Open [`LAB01/prompts.py`](file:///usr/local/google/home/piyasharma/Documents/Sou
 2.  Start the FastAPI server using your task file:
     ```bash
     cd LAB01
-    uvicorn app_task:app --host 127.0.0.1 --port 8001 --reload
+    uvicorn app_task:app --host 127.0.0.1 --port 8002 --reload
     ```
-3.  Open your browser and navigate to `http://127.0.0.1:8001`.
+3.  Open your browser and navigate to `http://127.0.0.1:8002`.
 4.  Fill in the team configuration grid and click **"Generate Avatars"**. 
 5.  Watch the real-time logs in the parallel terminal boxes. If you get errors, read the logs to debug your API calls!
-6.  Once generated, proceed to **Step 2 (Tactical Tuning)**, adjust your team's sliders, click **"Save Player Profiles"**, and click **"Proceed to LAB02"** to see your customized players run on the pitch!
+6.  Once generated, proceed to **Step 2 (Tactical Tuning)**, adjust your team's sliders, and click **"Save Player Profiles"** to see your customized players run on the pitch!
