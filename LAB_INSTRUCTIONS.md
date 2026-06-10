@@ -163,7 +163,6 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 ## Step 1: Initialize the Gemini Client
 *   **File to edit**: `LAB01/app.py`
-*   **Completed reference**: `LAB01/app.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 1 - Initialize the Gemini Client`.
 *   **Code to fill in**:
     ```python
@@ -175,7 +174,6 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 ## Step 2: Create a Style-Consistent Chat Session
 *   **File to edit**: `LAB01/app.py`
-*   **Completed reference**: `LAB01/app.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 2 - Create a style-consistent chat session`.
 *   **Code to fill in**:
     ```python
@@ -187,7 +185,6 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 ## Step 3: Request the Image Modality in Chat
 *   **File to edit**: `LAB01/app.py`
-*   **Completed reference**: `LAB01/app.py`
 *   **ToDo to look for**: Locate the comments `# TODO: Task 3a - Generate the Outfield Player Spritesheet` and `# TODO: Task 3b - Generate the Goalkeeper Spritesheet (Style Consistent)`.
 *   **Code to fill in**:
     Fill in these blocks using tabbed components:
@@ -298,7 +295,6 @@ In `LAB02`, we will split our monolithic Coach setup into a distributed network 
 
 ## Step 5: Write a Simple Direct Response Prompt for the Coach
 *   **File to edit**: `LAB02/football_agents/agent.py`
-*   **Completed reference**: `LAB02/football_agents/agent.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 1 - Write a simple direct response prompt for the Coach`.
 *   **Code to fill in**:
     Inside the `coach_agent` definition, locate the `instruction` prompt block:
@@ -321,7 +317,6 @@ In this step, you will wrap the captain agent as a standalone HTTP microservice 
 
 #### Task 2a: Define the Captain Agent
 *   **File to edit**: `LAB02/football_agents/captain.py`
-*   **Completed reference**: `LAB02/football_agents/captain.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 2 - Define the Captain Agent`.
 *   **Code to fill in**:
     ```python
@@ -335,7 +330,6 @@ In this step, you will wrap the captain agent as a standalone HTTP microservice 
 
 #### Task 2b: Import ADK A2A and Uvicorn Utilities
 *   **File to edit**: `LAB02/football_agents/captain_server.py`
-*   **Completed reference**: `LAB02/football_agents/captain_server.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 2b - Import ADK A2A and Uvicorn utilities`.
 *   **Code to fill in**:
     ```python
@@ -346,7 +340,6 @@ In this step, you will wrap the captain agent as a standalone HTTP microservice 
 
 #### Task 2c: Build the A2A Starlette App and Run the Server
 *   **File to edit**: `LAB02/football_agents/captain_server.py`
-*   **Completed reference**: `LAB02/football_agents/captain_server.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 2c - Build the A2A Starlette app and run the server`.
 *   **Code to fill in**:
     ```python
@@ -367,7 +360,6 @@ Now, you will configure the Coach agent to stop responding directly and instead 
 
 #### Task 3a: Define the Remote Captain Agent (A2A)
 *   **File to edit**: `LAB02/football_agents/agent.py`
-*   **Completed reference**: `LAB02/football_agents/agent.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 3a - Define the Remote Captain Agent (for Task 3)`.
 *   **Code to fill in**:
     ```python
@@ -384,7 +376,6 @@ Now, you will configure the Coach agent to stop responding directly and instead 
 
 #### Task 3b: Update Coach Prompt to Relay to the Captain
 *   **File to edit**: `LAB02/football_agents/agent.py`
-*   **Completed reference**: `LAB02/football_agents/agent.py`
 *   **ToDo to look for**: Locate the comment `# TODO: Task 3b - Update prompt to relay to the Captain (for Task 3)`.
 *   **Code to fill in**:
     Update the Coach Agent instructions and add the Captain to the `sub_agents` list:
@@ -409,11 +400,6 @@ In this step, we will define specialist player agents and equip them with the `u
 
 #### Task 4a: Define the Specialist Agents
 *   **Files to edit**:
-    *   `LAB02/football_agents/specialist_agents/defender.py`
-    *   `LAB02/football_agents/specialist_agents/midfielder.py`
-    *   `LAB02/football_agents/specialist_agents/forward.py`
-    *   `LAB02/football_agents/specialist_agents/goalkeeper.py`
-*   **Completed references**:
     *   `LAB02/football_agents/specialist_agents/defender.py`
     *   `LAB02/football_agents/specialist_agents/midfielder.py`
     *   `LAB02/football_agents/specialist_agents/forward.py`
@@ -446,7 +432,6 @@ Here, you will import the specialists and register them as tools under the Capta
 
 #### Task 4b: Register Specialist Agents and Orchestrate Captain
 *   **File to edit**: `LAB02/football_agents/captain.py`
-*   **Completed reference**: `LAB02/football_agents/captain.py`
 *   **ToDo to look for**: Locate the comments `# TODO: Task 4a - Import the Specialist Task Agents` and `# TODO: Task 4b - Equip Specialists & Write Orchestration Prompt`.
 *   **Code to fill in**:
     ```python
@@ -481,7 +466,6 @@ This bonus step connects the player agents to an external Model Context Protocol
 
 #### Task 5a: Import MCP Utilities (Optional)
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
-*   **Completed references**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
 *   **ToDo to look for**: Locate the comment `# TODO: Task 5a - Import MCP Utilities`.
 *   **Code to fill in**:
     ```python
@@ -490,7 +474,6 @@ This bonus step connects the player agents to an external Model Context Protocol
 
 #### Task 5b: Equip MCP Toolset & Prompt Guidance (Optional)
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
-*   **Completed references**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
 *   **ToDo to look for**: Locate the comment `# TODO: Task 5b - Equip MCP Toolset & Prompt Guidance`.
 *   **Code to fill in**:
     ```python
