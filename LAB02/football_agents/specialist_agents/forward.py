@@ -45,8 +45,11 @@ from .tools import update_profile
 # - shotPower (0.0-1.0; power of shots)
 # - decisionDelay (milliseconds, ~50-300; reaction delay before acting on the ball)
 #
+
+forward_agent = None  # 👈 REPLACE THIS WITH YOUR LlmAgent INITIALIZATION IN TASK 4
+
+
 # TODO: Task 5b - Equip MCP Toolset & Prompt Guidance (in Task 5)
 # - Add `make_condition_toolset()` to the tools list.
 # - Append `+ CONDITION_GUIDANCE` to the end of your instruction prompt.
 
-forward_agent = None  # 👈 REPLACE THIS WITH YOUR LlmAgent INITIALIZATION IN TASK 4
