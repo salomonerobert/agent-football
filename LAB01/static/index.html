@@ -276,175 +276,7 @@
 
             <!-- Tab Contents -->
             <div id="tabContents" class="space-y-6">
-                <!-- Defender Tab -->
-                <div id="tab-defender" class="tab-content space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Speed Multiplier</span>
-                                <span id="val-def-speed" class="text-blue-400 font-mono">1.0x</span>
-                            </label>
-                            <input type="range" id="slide-def-speed" min="0.5" max="1.5" step="0.05" value="1.0"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Multiplies the base pace of the defender (210 px/s).</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Defense Positioning (Depth)</span>
-                                <span id="val-def-depth" class="text-blue-400 font-mono">0.8</span>
-                            </label>
-                            <input type="range" id="slide-def-depth" min="0.1" max="1.0" step="0.05" value="0.8"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How deep the defender stays (higher = closer to own goal).
-                            </p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Aggression</span>
-                                <span id="val-def-aggression" class="text-blue-400 font-mono">0.6</span>
-                            </label>
-                            <input type="range" id="slide-def-aggression" min="0.1" max="1.0" step="0.05" value="0.6"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Willingness to press and attempt slide tackles.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Tackle Radius</span>
-                                <span id="val-def-tackle" class="text-blue-400 font-mono">0.6</span>
-                            </label>
-                            <input type="range" id="slide-def-tackle" min="0.3" max="1.0" step="0.05" value="0.6"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Distance from opponent at which defender initiates tackle.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Midfielder Tab (Hidden by default) -->
-                <div id="tab-midfielder" class="tab-content hidden space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Speed Multiplier</span>
-                                <span id="val-mid-speed" class="text-blue-400 font-mono">1.0x</span>
-                            </label>
-                            <input type="range" id="slide-mid-speed" min="0.5" max="1.5" step="0.05" value="1.0"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Multiplies the base pace of the midfielder (235 px/s).</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Pass Probability</span>
-                                <span id="val-mid-pass" class="text-blue-400 font-mono">0.85</span>
-                            </label>
-                            <input type="range" id="slide-mid-pass" min="0.1" max="1.0" step="0.05" value="0.85"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Preference to pass instead of shooting or dribbling.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Attack Positioning</span>
-                                <span id="val-mid-attack" class="text-blue-400 font-mono">0.6</span>
-                            </label>
-                            <input type="range" id="slide-mid-attack" min="0.1" max="1.0" step="0.05" value="0.6"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How far they push forward to support attacks.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Support Run Frequency</span>
-                                <span id="val-mid-support" class="text-blue-400 font-mono">0.5</span>
-                            </label>
-                            <input type="range" id="slide-mid-support" min="0.1" max="1.0" step="0.05" value="0.5"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How often they make off-ball runs into open space.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Forward Tab (Hidden by default) -->
-                <div id="tab-forward" class="tab-content hidden space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Speed Multiplier</span>
-                                <span id="val-fwd-speed" class="text-blue-400 font-mono">1.0x</span>
-                            </label>
-                            <input type="range" id="slide-fwd-speed" min="0.5" max="1.5" step="0.05" value="1.0"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Multiplies the base pace of the forward (260 px/s).</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Attack Positioning (Stay High)</span>
-                                <span id="val-fwd-attack" class="text-blue-400 font-mono">0.9</span>
-                            </label>
-                            <input type="range" id="slide-fwd-attack" min="0.5" max="1.0" step="0.05" value="0.9"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How high they stay (higher = closer to opponent goal).</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Shot Range</span>
-                                <span id="val-fwd-range" class="text-blue-400 font-mono">0.7</span>
-                            </label>
-                            <input type="range" id="slide-fwd-range" min="0.3" max="1.0" step="0.05" value="0.7"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Distance from goal at which they will attempt shots.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Dribble Tendency</span>
-                                <span id="val-fwd-dribble" class="text-blue-400 font-mono">0.6</span>
-                            </label>
-                            <input type="range" id="slide-fwd-dribble" min="0.1" max="1.0" step="0.05" value="0.6"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Preference to dribble instead of passing.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Goalkeeper Tab (Hidden by default) -->
-                <div id="tab-goalkeeper" class="tab-content hidden space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Speed Multiplier</span>
-                                <span id="val-gk-speed" class="text-blue-400 font-mono">1.0x</span>
-                            </label>
-                            <input type="range" id="slide-gk-speed" min="0.5" max="1.5" step="0.05" value="1.0"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Multiplies the base pace of the goalkeeper (180 px/s).</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Sweeper Tendency</span>
-                                <span id="val-gk-sweeper" class="text-blue-400 font-mono">0.1</span>
-                            </label>
-                            <input type="range" id="slide-gk-sweeper" min="0.0" max="0.8" step="0.05" value="0.1"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How far they rush off their line to clear long balls.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Tracking Speed</span>
-                                <span id="val-gk-tracking" class="text-blue-400 font-mono">0.05</span>
-                            </label>
-                            <input type="range" id="slide-gk-tracking" min="0.02" max="0.2" step="0.01" value="0.05"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">How quickly they move laterally to track the ball.</p>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="flex justify-between text-sm font-medium text-gray-400">
-                                <span>Dive Chance</span>
-                                <span id="val-gk-dive" class="text-blue-400 font-mono">0.08</span>
-                            </label>
-                            <input type="range" id="slide-gk-dive" min="0.02" max="0.3" step="0.01" value="0.08"
-                                class="w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer">
-                            <p class="text-xs text-gray-500">Tendency to trigger a diving block on close shots.</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Will be dynamically populated via renderSliders() -->
             </div>
 
             <div
@@ -459,10 +291,6 @@
                     <button type="button" id="saveProfilesBtn"
                         class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-md shadow-blue-900/30 flex items-center space-x-2 whitespace-nowrap">
                         <span>💾 Save Player Profiles</span>
-                    </button>
-                    <button type="button" id="nextLabBtn"
-                        class="hidden bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 px-6 rounded-lg transition duration-200 shadow-md shadow-green-900/30 flex items-center space-x-2 whitespace-nowrap">
-                        <span>Proceed to LAB02 ➡️</span>
                     </button>
                 </div>
             </div>
@@ -496,7 +324,6 @@
         const goToProfilesBtn = document.getElementById('goToProfilesBtn');
         const backToAvatarsBtn = document.getElementById('backToAvatarsBtn');
         const saveProfilesBtn = document.getElementById('saveProfilesBtn');
-        const nextLabBtn = document.getElementById('nextLabBtn');
         const profileSaveStatus = document.getElementById('profileSaveStatus');
 
         function appendLog(terminal, message, type = 'info') {
@@ -611,7 +438,6 @@
             terminalSection.classList.remove('hidden');
             previewSection.classList.add('hidden');
             profileConfigSection.classList.add('hidden');
-            nextLabBtn.classList.add('hidden');
 
             blueTerminal.innerHTML = '';
             redTerminal.innerHTML = '';
@@ -677,10 +503,322 @@
             previewSection.scrollIntoView({ behavior: 'smooth' });
         });
 
+        // Tab switching, dynamic rendering, and saving logic
+        const explanations = {
+            "speed": "Multiplies the base running pace of the player.",
+            "tackleRadius": "Range within which the player will lunge to steal the ball.",
+            "tackleCooldown": "Cooldown delay (in ms) between tackle attempts.",
+            "passProbability": "Propensity to pass the ball instead of shooting or dribbling.",
+            "passRange": "Preferred passing distance range.",
+            "shotPower": "Force of shot when kicking towards the goal.",
+            "shotRange": "Preferred range from the goal to attempt a shot.",
+            "aggression": "Tendency to sprint and challenge the ball when defending.",
+            "defensePositioning": "Stance depth on the pitch when defending (higher = stay deeper).",
+            "attackPositioning": "Stance height on the pitch when attacking (higher = push up further).",
+            "decisionDelay": "Reaction delay (in ms) before taking action with the ball.",
+            "pressingIntensity": "Frequency and intensity of closing down opposing ball-carriers.",
+            "formationDiscipline": "Shape discipline (hold position vs. chase the ball).",
+            "passRiskTolerance": "Propensity to attempt risky/narrow passing lanes.",
+            "dribbleTendency": "Preference to dribble the ball forward rather than pass.",
+            "recoverySpeedMultiplier": "Speed multiplier when running back to cover position.",
+            "supportRunFrequency": "Frequency of off-ball runs into open attacking space.",
+            "widthPreference": "Lateral positioning preference (hug touchline vs. tuck central).",
+            "interceptionRadius": "Interception/pass block reach.",
+            "foulProbability": "Chance of committing a foul during slide tackles.",
+            "counterAttackUrgency": "Sprint urgency when transitioning to counter-attack.",
+            "lineHeight": "Tactical height of defensive line/blocks.",
+            "clearance": "Clearance quality and distance when kicking away from goal.",
+            "longPassing": "Accuracy/preference for long aerial passes.",
+            "tackleAggression": "Hardness and risk level of tackle attempts.",
+            "foulRate": "Propensity to commit fouls during normal challenges.",
+            "kickPower": "Force of kicks/long passes.",
+            "passAccuracy": "Quality and execution accuracy of passes.",
+            "acceleration": "Rate of acceleration when starting a sprint.",
+            "pace": "Base running pace of the player.",
+            "finishing": "Quality and conversion rate of shots on goal.",
+            "defensiveAwareness": "Positional awareness when tracking attackers.",
+            "defensiveWorkRate": "Effort and work rate spent tracking back and defending.",
+            "shortPassing": "Quality and accuracy of short passes.",
+            "defensiveContribution": "Overall contribution to defensive play.",
+            "clearanceFrequency": "Tendency to clear the ball vs. playing short out of defence.",
+            "creativeFreedom": "Tendency to drift out of position to find space.",
+            "positionalDiscipline": "Discipline to hold the assigned position slot.",
+            "shooting": "Overall shooting skill level.",
+            "longPassProbability": "Propensity to choose a long pass over a short pass.",
+            "interceptionFrequency": "Frequency of successful pass interceptions.",
+            "defensiveCoverage": "Defensive coverage area size.",
+            "foulFrequency": "General rate of committing fouls.",
+            "tackleIntensity": "Hardness and intensity of tackles.",
+            "dropDeepPreference": "Preference to drop deep to assist the defense.",
+            "defensiveSupport": "Defensive support to other players.",
+            "dropDeepFrequency": "Frequency of tracking deep to support.",
+            "defensiveFocus": "General focus on defensive duties.",
+            "defensiveCover": "Covering space left by out-of-position teammates.",
+            "shootingUrgency": "Urgency to take a shot when open in front of goal.",
+            "forwardPassProbability": "Preference to pass forward vs. backward/sideways.",
+            "forwardRuns": "Propensity to make runs beyond the ball line.",
+            "positioning": "General positional awareness on the pitch.",
+            "rushOut": "Goalkeeper tendency to rush out to challenge.",
+            "stayOnLine": "Goalkeeper tendency to stay close to goal posts.",
+            "sweepAggression": "Goalkeeper sweep aggressiveness.",
+            "linePositioning": "Goalkeeper position relative to goal line.",
+            "sweeperTendency": "Propensity to run out of the box to clear long balls.",
+            "distributionAccuracy": "Goalkeeper pass/clearance accuracy.",
+            "sweepingAggression": "Aggressiveness of sweeps behind defence.",
+            "runOutChance": "Goalkeeper run out chance.",
+            "discipline": "General shape discipline.",
+            "joinAttack": "Propensity of goalkeeper to join attacking set pieces.",
+            "kickLength": "Length of goalkeeper clearances.",
+            "sweeperKeeper": "Goalkeeper sweeper keeper style factor.",
+            "foulTendency": "Goalkeeper foul tendency.",
+            "distributionRange": "Goalkeeper distribution range.",
+            "sweeperStyle": "Goalkeeper sweeping style factor.",
+            "positioningRange": "Area range covered by goalkeeper positioning.",
+            "rushingOut": "Rushing out frequency and timing."
+        };
+
+        const defaultProfiles = {
+            "defender": {
+                "speed": 0.8,
+                "tackleRadius": 0.8,
+                "tackleCooldown": 0.2,
+                "passProbability": 0.85,
+                "passRange": 0.7,
+                "shotPower": 0.8,
+                "shotRange": 0.7,
+                "aggression": 0.8,
+                "defensePositioning": 0.8,
+                "attackPositioning": 0.8,
+                "decisionDelay": 150,
+                "pressingIntensity": 0.9,
+                "formationDiscipline": 0.4,
+                "passRiskTolerance": 0.7,
+                "dribbleTendency": 0.6,
+                "recoverySpeedMultiplier": 1.1,
+                "supportRunFrequency": 0.8,
+                "widthPreference": 0.6,
+                "interceptionRadius": 0.8,
+                "foulProbability": 0.3,
+                "counterAttackUrgency": 0.9,
+                "lineHeight": 0.8,
+                "clearance": 0.3,
+                "longPassing": 0.7,
+                "tackleAggression": 0.8,
+                "foulRate": 0.7,
+                "kickPower": 0.9,
+                "passAccuracy": 0.85
+            },
+            "midfielder": {
+                "speed": 0.85,
+                "tackleRadius": 0.8,
+                "tackleCooldown": 0.3,
+                "passProbability": 0.9,
+                "passRange": 0.65,
+                "shotPower": 0.8,
+                "shotRange": 0.75,
+                "aggression": 0.8,
+                "defensePositioning": 0.3,
+                "attackPositioning": 0.85,
+                "decisionDelay": 0.1,
+                "pressingIntensity": 0.5,
+                "formationDiscipline": 0.9,
+                "passRiskTolerance": 0.75,
+                "dribbleTendency": 0.65,
+                "recoverySpeedMultiplier": 1.3,
+                "supportRunFrequency": 0.85,
+                "widthPreference": 0.5,
+                "interceptionRadius": 0.8,
+                "foulProbability": 0.2,
+                "counterAttackUrgency": 0.85,
+                "dropDeepFrequency": 0.3,
+                "defensiveFocus": 0.3,
+                "defensiveCover": 0.8,
+                "shootingUrgency": 0.8,
+                "forwardPassProbability": 0.8,
+                "defensiveWorkRate": 0.8,
+                "forwardRuns": 0.85,
+                "defensiveContribution": 0.35,
+                "creativeFreedom": 0.75,
+                "positionalDiscipline": 0.9,
+                "shooting": 0.8,
+                "clearanceFrequency": 0.2,
+                "longPassProbability": 0.7,
+                "interceptionFrequency": 0.8,
+                "defensiveCoverage": 0.8,
+                "foulFrequency": 0.9,
+                "tackleIntensity": 0.8,
+                "dropDeepPreference": 0.3,
+                "defensiveSupport": 0.75
+            },
+            "forward": {
+                "speed": 0.95,
+                "tackleRadius": 0.7,
+                "tackleCooldown": 0.2,
+                "passProbability": 0.2,
+                "passRange": 0.85,
+                "shotPower": 0.95,
+                "shotRange": 0.85,
+                "aggression": 0.85,
+                "defensePositioning": 0.1,
+                "attackPositioning": 0.98,
+                "decisionDelay": 0.05,
+                "pressingIntensity": 0.4,
+                "formationDiscipline": 0.3,
+                "passRiskTolerance": 0.8,
+                "dribbleTendency": 0.8,
+                "recoverySpeedMultiplier": 0.9,
+                "supportRunFrequency": 0.95,
+                "widthPreference": 0.5,
+                "interceptionRadius": 30,
+                "foulProbability": 0.1,
+                "counterAttackUrgency": 0.95,
+                "defensiveAwareness": 0.1,
+                "acceleration": 0.95,
+                "pace": 0.95,
+                "finishing": 0.98,
+                "defensiveWorkRate": 0.1,
+                "shortPassing": 0.85,
+                "defensiveContribution": 0.1
+            },
+            "goalkeeper": {
+                "speed": 0.9,
+                "tackleRadius": 0.9,
+                "tackleCooldown": 0.1,
+                "passProbability": 0.9,
+                "passRange": 0.5,
+                "shotPower": 0.95,
+                "shotRange": 0.9,
+                "aggression": 0.8,
+                "defensePositioning": 0.9,
+                "attackPositioning": 0.9,
+                "decisionDelay": 200,
+                "diveChance": 0.8,
+                "trackingSpeed": 0.9,
+                "pressingIntensity": 0.9,
+                "formationDiscipline": 0.9,
+                "passRiskTolerance": 0.8,
+                "dribbleTendency": 0.7,
+                "recoverySpeedMultiplier": 1.0,
+                "supportRunFrequency": 0.8,
+                "widthPreference": 0.5,
+                "interceptionRadius": 0.9,
+                "foulProbability": 0.05,
+                "counterAttackUrgency": 0.9,
+                "positioning": 0.9,
+                "rushOut": 0.8,
+                "stayOnLine": 0.2,
+                "sweepAggression": 0.9,
+                "linePositioning": 0.2,
+                "sweeperTendency": 0.9,
+                "distributionAccuracy": 0.9,
+                "sweepingAggression": 0.9,
+                "runOutChance": 0.8,
+                "discipline": 0.9,
+                "joinAttack": 0.8,
+                "clearance": 0.95,
+                "kickLength": 0.9,
+                "sweeperKeeper": 0.9,
+                "foulTendency": 0.5,
+                "kickPower": 0.9,
+                "distributionRange": 0.6,
+                "sweeperStyle": 0.95,
+                "positioningRange": 0.8,
+                "rushingOut": 0.8
+            }
+        };
+
+        function renderSliders() {
+            const container = document.getElementById('tabContents');
+            container.innerHTML = '';
+
+            for (const [role, profile] of Object.entries(defaultProfiles)) {
+                const roleDiv = document.createElement('div');
+                roleDiv.id = `tab-${role}`;
+                roleDiv.className = `tab-content space-y-4 ${role === 'defender' ? '' : 'hidden'}`;
+
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+
+                for (const [attr, val] of Object.entries(profile)) {
+                    const sliderGroup = document.createElement('div');
+                    sliderGroup.className = 'space-y-2';
+
+                    const labelEl = document.createElement('label');
+                    labelEl.className = 'flex justify-between text-sm font-medium text-gray-400';
+
+                    const friendlyName = attr.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    const nameSpan = document.createElement('span');
+                    nameSpan.innerText = friendlyName;
+
+                    const valSpan = document.createElement('span');
+                    valSpan.id = `val-${role}-${attr}`;
+                    valSpan.className = 'text-blue-400 font-mono';
+                    
+                    const isSpeed = attr === 'speed';
+                    const suffix = isSpeed ? 'x' : '';
+                    valSpan.innerText = val + suffix;
+
+                    labelEl.appendChild(nameSpan);
+                    labelEl.appendChild(valSpan);
+
+                    const inputEl = document.createElement('input');
+                    inputEl.type = 'range';
+                    inputEl.id = `slide-${role}-${attr}`;
+                    inputEl.className = 'w-full accent-blue-500 bg-gray-700 h-2 rounded-lg cursor-pointer';
+
+                    let min = 0.0, max = 1.0, step = 0.05;
+
+                    if (val > 2.0) {
+                        if (val >= 10.0) {
+                            min = 0;
+                            max = Math.ceil(val / 100) * 100 * 2;
+                            step = max >= 1000 ? 50 : 5;
+                        } else {
+                            min = 0.0;
+                            max = Math.ceil(val) * 2;
+                            step = 0.1;
+                        }
+                    } else if (val < 0.0) {
+                        min = -1.0;
+                        max = 1.0;
+                        step = 0.05;
+                    } else if (attr === 'recoverySpeedMultiplier') {
+                        min = 0.5;
+                        max = 2.0;
+                        step = 0.05;
+                    }
+
+                    inputEl.min = min;
+                    inputEl.max = max;
+                    inputEl.step = step;
+                    inputEl.value = val;
+
+                    inputEl.addEventListener('input', () => {
+                        valSpan.innerText = inputEl.value + suffix;
+                    });
+
+                    sliderGroup.appendChild(labelEl);
+                    sliderGroup.appendChild(inputEl);
+
+                    // Add attribute description text
+                    const descEl = document.createElement('p');
+                    descEl.className = 'text-xs text-gray-500 mt-1';
+                    descEl.innerText = explanations[attr] || 'Tweak the tactical behavior parameter.';
+                    sliderGroup.appendChild(descEl);
+
+                    gridDiv.appendChild(sliderGroup);
+                }
+
+                roleDiv.appendChild(gridDiv);
+                container.appendChild(roleDiv);
+            }
+        }
+
+        // Render sliders on start
+        renderSliders();
+
         // Tab switching logic
         const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetTab = btn.dataset.tab;
@@ -693,8 +831,8 @@
                 btn.classList.add('border-blue-500', 'text-blue-400');
                 btn.classList.remove('border-transparent', 'text-gray-400', 'hover:text-gray-200');
 
-                // Show/hide content
-                tabContents.forEach(content => {
+                // Show/hide content dynamically
+                document.querySelectorAll('.tab-content').forEach(content => {
                     if (content.id === `tab-${targetTab}`) {
                         content.classList.remove('hidden');
                     } else {
@@ -704,36 +842,6 @@
             });
         });
 
-        // Slider value display updates
-        const sliders = [
-            { id: 'def-speed', suffix: 'x' },
-            { id: 'def-depth', suffix: '' },
-            { id: 'def-aggression', suffix: '' },
-            { id: 'def-tackle', suffix: '' },
-            { id: 'mid-speed', suffix: 'x' },
-            { id: 'mid-pass', suffix: '' },
-            { id: 'mid-attack', suffix: '' },
-            { id: 'mid-support', suffix: '' },
-            { id: 'fwd-speed', suffix: 'x' },
-            { id: 'fwd-attack', suffix: '' },
-            { id: 'fwd-range', suffix: '' },
-            { id: 'fwd-dribble', suffix: '' },
-            { id: 'gk-speed', suffix: 'x' },
-            { id: 'gk-sweeper', suffix: '' },
-            { id: 'gk-tracking', suffix: '' },
-            { id: 'gk-dive', suffix: '' }
-        ];
-
-        sliders.forEach(s => {
-            const slider = document.getElementById(`slide-${s.id}`);
-            const valDisplay = document.getElementById(`val-${s.id}`);
-            if (slider && valDisplay) {
-                slider.addEventListener('input', () => {
-                    valDisplay.innerText = slider.value + s.suffix;
-                });
-            }
-        });
-
         // Save Profiles Logic
         saveProfilesBtn.addEventListener('click', async () => {
             saveProfilesBtn.disabled = true;
@@ -741,32 +849,14 @@
             profileSaveStatus.className = "text-sm font-semibold text-blue-400 animate-pulse";
             profileSaveStatus.innerText = "Saving profiles to LAB02...";
 
-            const payload = {
-                defender: {
-                    speed: parseFloat(document.getElementById('slide-def-speed').value),
-                    defensePositioning: parseFloat(document.getElementById('slide-def-depth').value),
-                    aggression: parseFloat(document.getElementById('slide-def-aggression').value),
-                    tackleRadius: parseFloat(document.getElementById('slide-def-tackle').value)
-                },
-                midfielder: {
-                    speed: parseFloat(document.getElementById('slide-mid-speed').value),
-                    passProbability: parseFloat(document.getElementById('slide-mid-pass').value),
-                    attackPositioning: parseFloat(document.getElementById('slide-mid-attack').value),
-                    supportRunFrequency: parseFloat(document.getElementById('slide-mid-support').value)
-                },
-                forward: {
-                    speed: parseFloat(document.getElementById('slide-fwd-speed').value),
-                    attackPositioning: parseFloat(document.getElementById('slide-fwd-attack').value),
-                    shotRange: parseFloat(document.getElementById('slide-fwd-range').value),
-                    dribbleTendency: parseFloat(document.getElementById('slide-fwd-dribble').value)
-                },
-                goalkeeper: {
-                    speed: parseFloat(document.getElementById('slide-gk-speed').value),
-                    attackPositioning: parseFloat(document.getElementById('slide-gk-sweeper').value),
-                    trackingSpeed: parseFloat(document.getElementById('slide-gk-tracking').value),
-                    diveChance: parseFloat(document.getElementById('slide-gk-dive').value)
+            const payload = {};
+            for (const role of ['defender', 'midfielder', 'forward', 'goalkeeper']) {
+                payload[role] = {};
+                for (const attr of Object.keys(defaultProfiles[role])) {
+                    const inputEl = document.getElementById(`slide-${role}-${attr}`);
+                    payload[role][attr] = parseFloat(inputEl.value);
                 }
-            };
+            }
 
             try {
                 const response = await fetch('/save/profiles', {
@@ -782,7 +872,6 @@
                 if (response.ok && result.status === 'success') {
                     profileSaveStatus.className = "text-sm font-semibold text-green-400";
                     profileSaveStatus.innerText = "Success! Default player profiles saved for LAB02.";
-                    nextLabBtn.classList.remove('hidden');
                 } else {
                     profileSaveStatus.className = "text-sm font-semibold text-red-400";
                     profileSaveStatus.innerText = `Error: ${result.detail || 'Failed to save profiles'}`;
@@ -794,10 +883,6 @@
                 saveProfilesBtn.disabled = false;
                 saveProfilesBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        });
-
-        nextLabBtn.addEventListener('click', () => {
-            window.location.href = "http://localhost:5173";
         });
     </script>
 </body>
