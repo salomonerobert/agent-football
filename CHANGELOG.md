@@ -4,6 +4,22 @@ All notable changes to the **Agentic Football Workshop** project are documented 
 
 ---
 
+## Release Prep Updates (2026-06-10)
+
+### 🔧 Changed & Simplified
+- **Simplified Instructions & Architecture Docs**: Renamed all `task_*.py` references and code snippet imports in `LAB_INSTRUCTIONS.md` to point directly to final filenames (`app.py`, `agent.py`, `captain.py`, etc.), matching the masked student workspace.
+- **Improved Architecture Visuals**: Replaced system Mermaid diagrams with high-fidelity diagrams (`diagram_a.png`, `diagram_b.png`, `diagram_c.png`), simplified headings, and added non-technical flow descriptions.
+- **Enhanced Asset Onboarding Visuals**: Incorporated LAB01 portal screenshots (`lab01_a.png`, `lab01_b.png`) and root banner headers to enrich Qwiklabs visual documentation.
+- **Removed Line Numbers**: Removed specific line number references from all instructions to prevent documentation rot as files evolve.
+
+### ⚡ Optimized & Fixed
+- **Fixed Prompt Parameter Mismatch**: Resolved a parameter naming mismatch in `get_player_prompt` which caused generation errors or mismatched visual properties.
+- **Fixed AgentTool Import Path**: Fixed `AgentTool` import path from `google.adk.agents.llm_agent` to `google.adk.tools`.
+- **Synchronized Mock MCP tools**: Updated `tools.py` mock functions to write to `substitutions.json` so the game's UI and player state react correctly even in mock MCP mode (`USE_REAL_MCP_SERVER = False`).
+- **Added MCP Activation Guidance**: Added Task 5c to Step 10 instructing students to toggle `USE_REAL_MCP_SERVER = True` to run the real stdio FastMCP server.
+
+---
+
 ## Commits: ef474c3, 33e19db, 788ec81, 6aca267, 2c3fab0, 28c9b1f, c231754 (2026-06-10)
 
 ### 🚀 Added

@@ -251,10 +251,6 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 
 ---
 
-<ql-activity-tracking step=1>
-    I successfully configured the LAB01 FastAPI backend and generated style-consistent spritesheets.
-</ql-activity-tracking>
-
 ### 🧩 LAB01 Checkpoint Questions
 
 <ql-multiple-choice-probe stem="When initializing a style-consistent image generation workflow in Task 2, which method must be used to create the chat session?"
@@ -537,10 +533,6 @@ To launch the multi-agent simulation workspace:
 5.  Type screams in the shout bar (e.g., "everyone attack", "play defensive") and observe the huddle bubble reactions and attributes shifting in real-time.
 
 ---
-
-<ql-activity-tracking step=2>
-    I configured the Team Captain A2A server and bound it as a remote agent on the Coach.
-</ql-activity-tracking>
 
 ### 🧩 LAB02 Checkpoint Questions
 
