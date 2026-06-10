@@ -40,11 +40,26 @@ cleanup() {
             kill "$pid"
         fi
     done
+    # Restore agent.py if it was swapped
+    if [ "$MODE" == "task" ] && [ -f "football_agents/agent.py.bak" ]; then
+        echo "--> Restoring original agent.py..."
+        mv football_agents/agent.py.bak football_agents/agent.py
+    fi
     exit 0
 }
 
 # Trap SIGINT (Ctrl+C) and SIGTERM to clean up all spawned processes
 trap cleanup SIGINT SIGTERM
+
+# In task mode, temporarily swap task_agent.py to agent.py
+# so that the adk web scanner registers the single agent under the correct directory name 'football_agents'
+if [ "$MODE" == "task" ]; then
+    if [ -f "football_agents/task_agent.py" ]; then
+        echo "--> Temporarily swapping task_agent.py to agent.py..."
+        mv football_agents/agent.py football_agents/agent.py.bak
+        cp football_agents/task_agent.py football_agents/agent.py
+    fi
+fi
 
 # Clean up any stale local ADK SQLite databases / session cache to prevent lock/corruption errors
 if [ -d ".adk" ]; then
@@ -54,17 +69,7 @@ fi
 
 echo "Starting LAB02 services in MODE: $MODE..."
 
-# 1. Start Frontend
-echo "--> Starting Frontend server (Vite)..."
-cd frontend
-npm run dev &
-PIDS+=($!)
-cd ..
-
-# Wait a brief moment for Frontend port assignment
-sleep 2
-
-# 2. Start Captain Server
+# 1. Start Captain Server
 echo "--> Starting Team Captain A2A Server..."
 if [ "$MODE" == "task" ]; then
     python3 -m football_agents.task_captain_server &
@@ -76,14 +81,22 @@ PIDS+=($!)
 # Wait a brief moment for A2A port registration
 sleep 2
 
-# 3. Start Coach Server (ADK Web)
+# 2. Start Coach Server (ADK Web)
+# Running adk web on '.' (the LAB02 root folder) scans the subdirectory 'football_agents'
+# and registers it as the agent application 'football_agents'.
 echo "--> Starting Head Coach Server (adk web)..."
-if [ "$MODE" == "task" ]; then
-    adk web football_agents/task_agent.py --allow_origins='*' &
-else
-    adk web football_agents --allow_origins='*' &
-fi
+adk web . --allow_origins='*' &
 PIDS+=($!)
+
+# Wait a brief moment for Coach server port registration
+sleep 2
+
+# 3. Start Frontend
+echo "--> Starting Frontend server (Vite)..."
+cd frontend
+npm run dev &
+PIDS+=($!)
+cd ..
 
 echo "=========================================================="
 echo "All services running! Press Ctrl+C to stop all of them."
