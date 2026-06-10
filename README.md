@@ -22,11 +22,10 @@ agent-football/
 │   ├── task_app.py              # Incomplete task template for students
 │   ├── prompts.py               # Image generation prompts
 │   ├── utils.py                 # Spritesheet compilation & base64 utilities
-│   ├── mask.sh                  # Local LAB01 masking script
 │   └── static/                  # Onboarding UI (HTML/Tailwind/JS)
 └── LAB02/                       # Multi-agent 2D soccer simulation
     ├── README.md                # LAB02 overview
-    ├── mask.sh                  # Local LAB02 masking script
+    ├── run_lab02.sh             # Consolidated runner script (Frontend + Captain + Coach)
     ├── football_agents/         # ADK agent configurations
     │   ├── agent.py             # Head Coach agent (solved)
     │   ├── task_agent.py        # Head Coach agent template
@@ -159,7 +158,26 @@ Before releasing code, maintainers should test the components locally to verify 
 4. Modify sliders in **Step 2 (Tactical Tuning)**, click **"Save Player Profiles"** and verify that all 27+ attributes are written cleanly to `LAB02/frontend/public/player_state/*.json`.
 
 ### Testing LAB02 (Soccer Simulation)
-Run the following three commands in separate terminals with the virtual environment active:
+Maintainers can run the services using the consolidated startup script or by starting each service manually in separate terminals.
+
+#### Option A: Run using the Consolidated Script (Recommended)
+1. Navigate to the `LAB02` directory:
+   ```bash
+   cd LAB02
+   ```
+2. Start all three services concurrently:
+   *   **To run the completed reference solution**:
+       ```bash
+       bash run_lab02.sh
+       ```
+   *   **To run the student task templates**:
+       ```bash
+       bash run_lab02.sh task
+       ```
+3. Press `Ctrl+C` in the terminal to gracefully stop all services.
+
+#### Option B: Run Manually in Separate Terminals
+Start the following three commands in separate terminals:
 
 1.  **Frontend Server**:
     ```bash
@@ -171,15 +189,16 @@ Run the following three commands in separate terminals with the virtual environm
 2.  **Captain A2A Server**:
     ```bash
     cd LAB02
-    python3 -m football_agents.captain_server
+    python3 -m football_agents.captain_server # (use .task_captain_server for templates)
     ```
     *Exposes the Captain remote agent on port 8001.*
 
 3.  **Coach Server (ADK Web)**:
     ```bash
     cd LAB02
-    ../venv/bin/adk web football_agents/agent.py
+    ../venv/bin/adk web football_agents/agent.py # (use /task_agent.py for templates)
     ```
     *Runs the ADK Web proxy on port 8000.*
 
-Open `http://localhost:5173/` in your browser, click **Kick Off!**, and type shouts into the Coach Bar (e.g., "everyone attack"). Verify in the logs that the Coach delegates to the Captain, the Captain delegates to individual players, the players execute `update_profile` tool calls, and the final quotes are assembled into the huddle huddle response.
+### E2E Verification Flow
+Open `http://localhost:5173/` in your browser, click **Kick Off!**, and type shouts into the Coach Bar (e.g., "everyone attack"). Verify in the logs that the Coach delegates to the Captain, the Captain delegates to individual players, the players execute `update_profile` tool calls, and the final quotes are assembled into the huddle response.
