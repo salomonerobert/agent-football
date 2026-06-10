@@ -109,22 +109,31 @@ Before starting the implementation, you must set up your Python virtual environm
     ```bash
     cd agent-football
     ```
+3. Create python virtual environment:
+    ```bash
+    python3 -m venv venv
+    ```
 
-3. Activate the pre-configured virtual environment:
+4. Activate the pre-configured virtual environment:
     ```bash
     source venv/bin/activate
     ```
 
-4. Copy the environment template to create your `.env` configuration:
+5. Install required python dependencies:
     ```bash
-    gcp .env.example .env
+    pip install -r requirements.txt
     ```
 
-5. Open the `.env` file and verify or fill in your Google Cloud project details:
+6. Copy the environment template to create your `.env` configuration:
+    ```bash
+    cp .env.example .env
+    ```
+
+7. Open the `.env` file and verify or fill in your Google Cloud project details:
     ```ini
     GOOGLE_GENAI_USE_VERTEXAI=true
     GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
-    GOOGLE_CLOUD_LOCATION=us-central1
+    GOOGLE_CLOUD_LOCATION=global
     ```
 
 
@@ -138,7 +147,12 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
     ```
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
-2. Run the following command to enable the Vertex AI service:
+2. Authenticate your Cloud Shell session:
+    ```bash
+    gcloud auth application-default set-quota-project PROJECT_ID && gcloud config set project PROJECT_ID
+    ```
+
+3. Run the following command to enable the Vertex AI service:
     ```bash
     gcloud services enable aiplatform.googleapis.com
     ```
