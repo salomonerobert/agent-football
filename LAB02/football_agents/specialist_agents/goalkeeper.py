@@ -12,35 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# =====================================================================
+# Task 4 & 5: Goalkeeper Specialist Agent (GoalkeeperSpecialist) - TEMPLATE
+# =====================================================================
+
 from google.adk.agents.llm_agent import LlmAgent
 from football_agents.constants import GeminiConstants
-from .tools import update_profile, make_condition_toolset, CONDITION_GUIDANCE
+from .tools import update_profile
 
-goalkeeper_agent = LlmAgent(
-    name="GoalkeeperSpecialist",
-    model=GeminiConstants.GEMINI_FLASH_LITE,
-    description="Handles tactical instructions and attribute updates for the GOALKEEPER role.",
-    instruction="""You are a slightly eccentric and loud Goalkeeper who hates conceding goals.
-    The team captain is relaying an instruction to you. If the instruction is general or specifically for goalkeepers, use the `update_profile` tool to update the 'goalkeeper' role attributes.
-    If the instruction is explicitly ONLY for another role, do NOT use the tool.
+# TODO: Task 5a - Import MCP Utilities (Uncomment in Task 5)
+# from .tools import make_condition_toolset, CONDITION_GUIDANCE
 
-    IMPORTANT: You must affect ALL attributes that logically align with the command, rather than just modifying one or two.
-    Here are the ONLY attributes that affect gameplay. Write values in the ranges noted; do NOT invent other keys.
-    - speed (0.0-1.0 multiplier on base pace)
-    - attackPositioning (0.0-1.0; sweeper tendency — how far you rush off your line to clear long balls)
-    - trackingSpeed (0.0-1.0; how quickly you slide across to track the ball)
-    - diveChance (0.0-1.0; tendency to dive at shots)
 
-    CRITICAL INSTRUCTION:
-    Step 1. Evaluate and use `update_profile` to apply changes to ALL matching attributes.
-    Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
+# TODO: Task 4a - Define the Goalkeeper Agent
+# 1. Initialize `goalkeeper_agent` as an LlmAgent.
+# 2. Set name="GoalkeeperSpecialist" and model=GeminiConstants.GEMINI_FLASH_LITE.
+# 3. Equip it with `update_profile` in the `tools` list.
+# 4. Write the system instruction prompt.
+#
+# Available Goalkeeper Attributes (to modify via update_profile):
+# - speed (0.0-1.0 multiplier on base pace)
+# - attackPositioning (0.0-1.0; sweeper tendency — how far you rush off your line to clear long balls)
+# - trackingSpeed (0.0-1.0; how quickly you slide across to track the ball)
+# - diveChance (0.0-1.0; tendency to dive at shots)
+#
+# TODO: Task 5b - Equip MCP Toolset & Prompt Guidance (in Task 5)
+# - Add `make_condition_toolset()` to the tools list.
+# - Append `+ CONDITION_GUIDANCE` to the end of your instruction prompt.
 
-    Examples for Step 2:
-    - If asked to defend/stay back: "Building a brick wall!"
-    - If asked to play active/sweep: "Sweeper keeper activated!"
-    - If the instruction is for someone else: "Staying on my line!"
-
-    You MUST provide the verbal response and it MUST be 3-5 words!""" + CONDITION_GUIDANCE,
-    tools=[update_profile] + make_condition_toolset(),
-    output_key="goalkeeper_response"
-)
+goalkeeper_agent = None  # 👈 REPLACE THIS WITH YOUR LlmAgent INITIALIZATION IN TASK 4

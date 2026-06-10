@@ -51,12 +51,11 @@ class TeamAttributes(BaseModel):
 # Key: "blue" (My Team) or "red" (Opponent)
 chat_sessions = {}
 
-# Initialize the Gemini Client
-try:
-    client = genai.Client()
-except Exception as e:
-    print(f"Error initializing GenAI Client: {e}")
-    client = None
+# TODO: Task 1 - Initialize the Gemini Client
+# Use the google-genai SDK to create a Client instance.
+# The client will automatically pick up your Vertex AI environment
+# Hint: Use genai.Client().
+client = None  # Replace this with your initialization code
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -77,20 +76,22 @@ async def generate_team_stream(team_id: str, team_data: TeamAttributes):
     # Load modular player prompt
     player_prompt = get_player_prompt(color, logo, style)
     
-    # Create chat session to maintain style consistency between player and goalkeeper
-    chat = client.aio.chats.create(model="publishers/google/models/gemini-3.1-flash-image")
+    # TODO: Task 2 - Create a style-consistent chat session
+    # Create a brand new async chat session for this team using client.aio.chats.create.
+    # We use a chat session so that the second asset (goalkeeper) can reference the first one (player) in history!
+    # Model to use: "publishers/google/models/gemini-3.1-flash-image"
+    chat = None  # Replace this with your chat creation code using client.aio.chats.create
+    
     chat_sessions[team_id] = chat
     
     yield f"data: {json.dumps({'status': 'log', 'message': 'Sending player prompt to Gemini...'})}\n\n"
     
     try:
-        response = await chat.send_message(
-            player_prompt,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE"],
-                image_config=types.ImageConfig(aspect_ratio="16:9")
-            )
-        )
+        # TODO: Task 3a - Generate the Outfield Player Spritesheet
+        # Send the player_prompt to the active chat session (async call).
+        # Configure it to return an IMAGE modality and set the aspect_ratio to "16:9" in the image_config.
+        # Hint: Use await chat.send_message with types.GenerateContentConfig.
+        response = None  # Replace this with your generation call
     except Exception as e:
         yield f"data: {json.dumps({'status': 'error', 'message': f'Gemini Error: {str(e)}'})}\n\n"
         return
@@ -120,13 +121,13 @@ async def generate_team_stream(team_id: str, team_data: TeamAttributes):
     yield f"data: {json.dumps({'status': 'log', 'message': 'Sending goalkeeper prompt to Gemini...'})}\n\n"
     
     try:
-        response = await chat.send_message(
-            gk_prompt,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE"],
-                image_config=types.ImageConfig(aspect_ratio="16:9")
-            )
-        )
+        # TODO: Task 3b - Generate the Goalkeeper Spritesheet (Style Consistent)
+        # Send the gk_prompt to the SAME active chat session (async call).
+        # Because we are using the same chat session, Gemini will use the history of the player
+        # we just generated to keep the goalkeeper's style, logo, and jersey consistent!
+        # Configure it to return an IMAGE modality and set the aspect_ratio to "16:9" in the image_config.
+        # Hint: Use await chat.send_message with types.GenerateContentConfig.
+        response = None  # Replace this with your generation call
     except Exception as e:
         yield f"data: {json.dumps({'status': 'error', 'message': f'Gemini Error: {str(e)}'})}\n\n"
         return

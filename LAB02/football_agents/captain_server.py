@@ -13,38 +13,36 @@
 # limitations under the License.
 
 """
-Team Captain A2A server
-=======================
+Task 2: Team Captain A2A Server - TEMPLATE
+==========================================
 
-Exposes the `captain_agent` (defined in agent.py) as a standalone Agent-to-Agent
-(A2A) service. The coach agent (root_agent, served by `adk web`) reaches this
-service via RemoteA2aAgent, so the coach -> captain hop is a real A2A call.
+In this file, you will write the code to expose your `task_captain` agent
+as a standalone Agent-to-Agent (A2A) service running on port 8001.
 
-Run it alongside `adk web`:
+Run it using:
+    python -m football_agents.task_captain_server
 
-    python football_agents/captain_server.py            # serves on :8001
-
-Override host/port with CAPTAIN_HOST / CAPTAIN_PORT. The agent card is published
-at  http://<host>:<port>/.well-known/agent-card.json
+Verify by visiting:
+    http://localhost:8001/.well-known/agent-card.json
 """
 
 import os
-import uvicorn
 from dotenv import load_dotenv
-from google.adk.a2a.utils.agent_to_a2a import to_a2a
-from football_agents.captain import captain_agent
 
 # Load environment variables from .env file
 load_dotenv()
 
-HOST = os.environ.get("CAPTAIN_HOST", "localhost")
-PORT = int(os.environ.get("CAPTAIN_PORT", "8001"))
+# TODO: Task 2b - Import ADK A2A and Uvicorn utilities
+# Make sure to import your `captain_agent` from `football_agents.task_captain`!
+# Hint:
+# from google.adk.a2a.utils.agent_to_a2a import to_a2a
+# import uvicorn
+# from football_agents.task_captain import captain_agent
 
 
-# Build the A2A Starlette app. `host`/`port` are baked into the published agent card.
-app = to_a2a(captain_agent, host=HOST, port=PORT)
-
-if __name__ == "__main__":
-    print(f"Serving Team Captain over A2A at http://{HOST}:{PORT}")
-    print(f"Agent card: http://{HOST}:{PORT}/.well-known/agent-card.json")
-    uvicorn.run(app, host=HOST, port=PORT)
+# TODO: Task 2c - Build the A2A Starlette app and run the server
+# 1. Retrieve HOST and PORT from environment (default to "localhost" and 8001).
+# 2. Use `to_a2a` to convert the `captain_agent` into an app, passing host and port.
+# 3. In the `__main__` block, use `uvicorn.run` to start the server.
+#
+# Your code here:
