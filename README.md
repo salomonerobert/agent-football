@@ -1,122 +1,185 @@
-# ⚽ Agentic Football Workshop - Quick Start Guide
+# ⚽ Agentic Football Workshop - Developer & Maintainer Guide
 
-This guide provides quick instructions to get **LAB01** and **LAB02** up and running.
+> [!NOTE]
+> This document is intended strictly for developers, maintainers, and authors of the Agentic Football Workshop codebase. If you are a workshop participant, please follow the student-facing instructions in [INSTRUCTIONS.md](INSTRUCTIONS.md).
 
----
-
-## 🛠️ Common Prerequisites & Environment Setup
-
-Before running either lab, you need to set up your Python environment and credentials.
-
-1.  **Navigate to the project root**:
-    ```bash
-    cd agent-football
-    ```
-
-2.  **Activate the Virtual Environment**:
-    The repository comes with a pre-configured virtual environment. Activate it:
-    ```bash
-    source venv/bin/activate
-    ```
-
-3.  **Configure Environment Variables**:
-    Copy the `.env.example` to `.env`:
-    ```bash
-    cp .env.example .env
-    ```
-    Open `.env` and configure it:
-    *   **Option A (Vertex AI - Recommended)**: Set `GOOGLE_CLOUD_PROJECT` to your Google Cloud Project ID.
-        ```ini
-        GOOGLE_GENAI_USE_VERTEXAI=true
-        GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
-        GOOGLE_CLOUD_LOCATION=us-central1
-        ```
-    *   **Option B (Gemini Developer API)**: Comment out `GOOGLE_CLOUD_PROJECT` and set `GEMINI_API_KEY` to your Gemini API key.
-        ```ini
-        # GOOGLE_GENAI_USE_VERTEXAI=true
-        GEMINI_API_KEY=your-gemini-api-key
-        ```
+This repository contains the source code, Phaser engine assets, and Agent Development Kit (ADK) configurations for a 5v5 interactive LLM soccer simulator workshop. The codebase is divided into two primary sections: **LAB01** (asset generation and custom onboarding) and **LAB02** (the live multi-agent simulation).
 
 ---
 
-## 🎨 LAB01: Avatar & Team Onboarding Portal
+## 🏗️ Project Architecture
 
-LAB01 is a web portal where you customize your team's visual identity (generating spritesheets with Gemini) and starting tactics.
+The workspace is structured to separate concerns between frontend simulation layers and backend agent communication layers:
 
-### Running LAB01:
-1.  Ensure you are in the `LAB01` directory and your venv is active:
-    ```bash
-    cd LAB01
-    ```
-2.  Start the FastAPI server:
-    *   **To run your task template (for development)**:
-        ```bash
-        uvicorn task_app:app --host 127.0.0.1 --port 8002 --reload
-        ```
-    *   **To run the completed reference solution**:
-        ```bash
-        uvicorn app:app --host 127.0.0.1 --port 8002 --reload
-        ```
-3.  Open `http://127.0.0.1:8002` in your browser.
-4.  Configure your team, click **"Generate Avatars"**, then **"Save Player Profiles"** to send the assets and tactics directly to LAB02.
+```
+agent-football/
+├── mask.sh                      # Root masking script to overwrite solution files with templates
+├── LICENSE.md                   # Apache 2.0 license file
+├── INSTRUCTIONS.md              # Workshop student activity instructions
+├── ToDo.md                      # Release tracking tasklist
+├── LAB01/                       # Onboarding & asset generation portal
+│   ├── app.py                   # Solved FastAPI backend
+│   ├── task_app.py              # Incomplete task template for students
+│   ├── prompts.py               # Image generation prompts
+│   ├── utils.py                 # Spritesheet compilation & base64 utilities
+│   ├── mask.sh                  # Local LAB01 masking script
+│   └── static/                  # Onboarding UI (HTML/Tailwind/JS)
+└── LAB02/                       # Multi-agent 2D soccer simulation
+    ├── README.md                # LAB02 overview
+    ├── mask.sh                  # Local LAB02 masking script
+    ├── football_agents/         # ADK agent configurations
+    │   ├── agent.py             # Head Coach agent (solved)
+    │   ├── task_agent.py        # Head Coach agent template
+    │   ├── captain.py           # Team Captain agent (solved)
+    │   ├── task_captain.py      # Team Captain agent template
+    │   ├── captain_server.py    # Captain A2A server launcher (solved)
+    │   ├── task_captain_server.py # Captain A2A server template
+    │   ├── football_mcp_server.py # FastMCP server hosting condition tools
+    │   └── specialist_agents/   # Specialist player agents
+    │       ├── defender.py      # Defender Specialist (solved)
+    │       ├── midfielder.py    # Midfielder Specialist (solved)
+    │       ├── forward.py       # Forward Specialist (solved)
+    │       ├── goalkeeper.py    # Goalkeeper Specialist (solved)
+    │       └── tools.py         # Profile I/O, backup/restore, & dummy MCP tools
+    └── frontend/                # Phaser 2D game engine client
+        ├── vite.config.js       # Vite development proxy configuration
+        ├── package.json         # Node.js dependencies
+        └── src/
+            ├── main.js          # Coach console UI, A2A/SSE handler, and MCP logger
+            └── game.js          # Core Phaser game loop & player state synchronization
+```
 
 ---
 
-## 🏆 LAB02: Multi-Agent Football Simulation
+## 🛠️ Developer Environment Setup & Prerequisites
 
-LAB02 is the live simulation where your customized players run on the pitch, coordinated by a Team Captain and Coach Agent, communicating via A2A and MCP.
+Maintainers must configure their local environments with Google Cloud credentials and authorized SDKs to test model calls.
 
-Running LAB02 requires running three components simultaneously in separate terminals: the **Frontend**, the **Captain Server**, and the **Coach Server**.
+### 1. Cloning the Repository
+Clone the repository to your local workspace:
+```bash
+git clone https://github.com/salomonerobert/agent-football.git
+cd agent-football
+```
 
-### Running LAB02:
+### 2. Enabling required Google Cloud APIs
+Vertex AI model access requires enabling the Vertex AI service inside your Google Cloud project. 
 
-#### Step 1: Start the Frontend (Vite)
-1.  Open a new terminal and navigate to the frontend directory:
+Install the Google Cloud CLI (`gcloud`) and run:
+```bash
+# Authenticate your CLI session
+gcloud auth login
+
+# Set your active GCP project ID
+gcloud config set project your-google-cloud-project-id
+
+# Enable the Vertex AI API service
+gcloud services enable aiplatform.googleapis.com
+```
+
+Ensure your IAM user or service account has the **Vertex AI User** (`roles/aiplatform.user`) role assigned in the Google Cloud Console.
+
+### 3. Initialize the Virtual Environment
+The repository packages a pre-configured Python virtual environment for developer convenience.
+```bash
+# Activate the python virtual environment
+source venv/bin/activate
+
+# Verify dependencies are correctly resolved
+pip list
+```
+
+### 4. Configure Environment Variables
+Copy the template `.env.example` to `.env` in the repository root:
+```bash
+cp .env.example .env
+```
+Open `.env` and fill in your authorized Google Cloud parameters:
+```ini
+GOOGLE_GENAI_USE_VERTEXAI=true
+GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+```
+
+---
+
+## 📋 Standard Operating Procedure (SOP) for Code Changes
+
+This repository operates on a strict **two-branch system** to separate the completed reference solutions from the blank task templates delivered to students.
+
+```mermaid
+graph TD
+    A["1. Branch from completed-labs"] --> B["2. Edit both solution & task files"]
+    B --> C["3. Create PR to completed-labs branch"]
+    C --> D["4. Merge PR into completed-labs"]
+    D --> E["5. Switch back to feature branch & run mask.sh"]
+    E --> F["6. Commit masked state & create PR to main branch"]
+```
+
+### 1. Work off the `completed-labs` branch
+Never make changes directly on the `main` branch. Always checkout a feature branch branching out from the solved reference branch:
+```bash
+git checkout completed-labs
+git pull origin completed-labs
+git checkout -b feature/my-feature-name
+```
+
+### 2. Modify both code versions in parallel
+When adding a feature or fixing a bug, implement it in **both** files in the pair:
+*   The completed file (e.g. `LAB02/football_agents/specialist_agents/defender.py`).
+*   The student task template file (e.g. `LAB02/football_agents/specialist_agents/task_defender.py`), ensuring that the `# TODO` comment blocks and blank constants reflect your structural updates.
+
+### 3. Submit Pull Request to `completed-labs`
+Push your feature branch and create a Pull Request targeting the **`completed-labs`** branch. Once reviewed and accepted, merge the feature branch. This ensures that the master history of the solved workshop remains intact and up-to-date.
+
+### 4. Apply Masking locally
+Go back to your local feature branch, pull the latest updates, and run the master masking script from the root of the project:
+```bash
+bash mask.sh
+```
+This script will overwrite all completed solved files (`app.py`, `agent.py`, etc.) with their task template files (`task_app.py`, etc.) and delete the now-redundant task templates, leaving only the incomplete workspace for the students.
+
+### 5. Submit Pull Request to `main`
+Commit the masked changes to your feature branch, push it to remote, and open a second Pull Request targeting the **`main`** branch. Once merged, the student workspace is updated!
+
+---
+
+## 🧪 Testing and Verification
+
+Before releasing code, maintainers should test the components locally to verify everything is working.
+
+### Testing LAB01 (Avatar Creator)
+1. Navigate to `LAB01` and run the FastAPI server:
+   ```bash
+   cd LAB01
+   uvicorn app:app --host 127.0.0.1 --port 8002 --reload
+   ```
+2. Navigate to `http://127.0.0.1:8002` in your browser.
+3. Generate spritesheets for blue and red teams. Verify they are correctly written to `LAB02/frontend/public/assets/sprites/`.
+4. Modify sliders in **Step 2 (Tactical Tuning)**, click **"Save Player Profiles"** and verify that all 27+ attributes are written cleanly to `LAB02/frontend/public/player_state/*.json`.
+
+### Testing LAB02 (Soccer Simulation)
+Run the following three commands in separate terminals with the virtual environment active:
+
+1.  **Frontend Server**:
     ```bash
-    cd agent-football/frontend
-    ```
-2.  Start the development server (requires Node.js):
-    ```bash
+    cd LAB02/frontend
     npm run dev
     ```
-    *The UI will run on `http://localhost:5173/`.*
+    *Runs Vite on `http://localhost:5173/`.*
 
-#### Step 2: Start the Captain Server (A2A on Port 8001)
-1.  Open a new terminal, navigate to `LAB02`, and activate the venv:
+2.  **Captain A2A Server**:
     ```bash
-    cd agent-football/LAB02
-    source ../venv/bin/activate
+    cd LAB02
+    python3 -m football_agents.captain_server
     ```
-2.  Start the Captain server:
-    *   **To run your task template (for development)**:
-        ```bash
-        python3 -m football_agents.task_captain_server
-        ```
-    *   **To run the completed reference solution**:
-        ```bash
-        python3 -m football_agents.captain_server
-        ```
+    *Exposes the Captain remote agent on port 8001.*
 
-#### Step 3: Start the Coach Server (adk web on Port 8000)
-1.  Open a new terminal, navigate to `LAB02`, and activate the venv:
+3.  **Coach Server (ADK Web)**:
     ```bash
-    cd agent-football/LAB02
-    source ../venv/bin/activate
+    cd LAB02
+    ../venv/bin/adk web football_agents/agent.py
     ```
-2.  Start the Coach server:
-    *   **To run your task template (for development)**:
-        ```bash
-        ../venv/bin/adk web football_agents/task_agent.py
-        ```
-    *   **To run the completed reference solution**:
-        ```bash
-        ../venv/bin/adk web football_agents/agent.py
-        ```
+    *Runs the ADK Web proxy on port 8000.*
 
----
-
-### 🎮 Playing the Game
-1.  Open `http://localhost:5173/` in your browser.
-2.  Click **Kick Off!** to start the simulation.
-3.  Use the **Coach Shout Bar** at the bottom to send tactical instructions (e.g., "everyone attack", "park the bus", "play defensive").
-4.  Watch the agents coordinate and update player attributes in real-time!
+Open `http://localhost:5173/` in your browser, click **Kick Off!**, and type shouts into the Coach Bar (e.g., "everyone attack"). Verify in the logs that the Coach delegates to the Captain, the Captain delegates to individual players, the players execute `update_profile` tool calls, and the final quotes are assembled into the huddle huddle response.

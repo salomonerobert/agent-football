@@ -280,7 +280,7 @@ defender_agent = LlmAgent(
 ### Task 2: Launch and Test the Simulation
 1. Start the Vite frontend dev server:
     ```bash
-    cd /Users/aishprabhat/Documents/repos/agent-football/LAB02/frontend
+    cd LAB02/frontend
     npm run dev
     ```
 

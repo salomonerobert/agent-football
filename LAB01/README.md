@@ -34,7 +34,7 @@ Before writing any code, you need to configure your Google Cloud credentials so 
 ---
 
 ### 🔌 Task 1: Initialize the Gemini Client
-Open [`LAB01/task_app.py`](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB01/task_app.py) and locate **`Task 1`** (around line 40).
+Open [`LAB01/task_app.py`](task_app.py) and locate **`Task 1`** (around line 40).
 
 Your task is to initialize the GenAI client. The client automatically reads the `GOOGLE_CLOUD_PROJECT` variable you set in Task 0 to authenticate.
 
@@ -93,7 +93,7 @@ response = None  # 👈 REPLACE THIS WITH YOUR GENERATION CALL
 ### 📝 Task 4: Prompt Engineering Sandbox
 Once your API calls are working, run the server (see instructions below). You will notice that the default prompts might generate beautiful players, but they won't animate correctly in the game because they don't match the strict grid layout expected by the Phaser engine.
 
-Open [`LAB01/prompts.py`](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB01/prompts.py) and optimize the prompts to meet these strict technical requirements:
+Open [`LAB01/prompts.py`](prompts.py) and optimize the prompts to meet these strict technical requirements:
 
 1.  **Outfield Player Spritesheet (`get_player_prompt`):**
     *   Must be a **single horizontal row** of exactly **4 frames** (idle, run 1, run 2, kick).

@@ -90,10 +90,10 @@ We have broken the development into 5 progressive tasks. You will start with a s
 
 ### 🔵 Task 1: The Local Monolith (Single Agent in `adk web`)
 *   **Objective**: Bootstrap your very first local agent using `adk web` and verify your Gemini connection.
-*   **File to Edit**: [football_agents/task_agent.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_agent.py)
+*   **File to Edit**: [football_agents/task_agent.py](football_agents/task_agent.py)
 
 #### 📝 Instructions:
-1.  Open [task_agent.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_agent.py).
+1.  Open [task_agent.py](football_agents/task_agent.py).
 2.  Review the `coach_agent` (`LlmAgent`) definition. It has been pre-configured to handle the system commands `BACKUP_BASELINE` and `RESTORE_BASELINE` (which automatically snapshot your LAB01 sliders to disk).
 3.  Your task is to write the instruction prompt for the `TACTICAL SHOUTS` section. Instruct the Coach to respond **directly** to any other message (shouts like "everyone attack") as a passionate, encouraging coach with a funny 1-sentence shout. Do NOT add any sub-agents or tools yet.
 
@@ -116,12 +116,12 @@ We have broken the development into 5 progressive tasks. You will start with a s
 ### 🔌 Task 2: Create the Standalone Captain A2A Server
 *   **Objective**: Expose an agent as an independent, network-reachable service using the **Agent-to-Agent (A2A)** protocol.
 *   **Files to Edit**: 
-    1.  [football_agents/task_captain.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_captain.py)
-    2.  [football_agents/task_captain_server.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_captain_server.py)
+    1.  [football_agents/task_captain.py](football_agents/task_captain.py)
+    2.  [football_agents/task_captain_server.py](football_agents/task_captain_server.py)
 
 #### 📝 Instructions:
-1.  Open [task_captain.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_captain.py). Initialize the `captain_agent` as a simple `LlmAgent`. Give it a prompt instructing it to act as the team captain and respond with a simple player-style greeting (e.g., "Captain here, ready to lead!"). Leave `tools` empty.
-2.  Open [task_captain_server.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_captain_server.py). Write the A2A server plumbing:
+1.  Open [task_captain.py](football_agents/task_captain.py). Initialize the `captain_agent` as a simple `LlmAgent`. Give it a prompt instructing it to act as the team captain and respond with a simple player-style greeting (e.g., "Captain here, ready to lead!"). Leave `tools` empty.
+2.  Open [task_captain_server.py](football_agents/task_captain_server.py). Write the A2A server plumbing:
     *   Import `to_a2a` from `google.adk.a2a.utils.agent_to_a2a`.
     *   Import `uvicorn` and your `captain_agent` (from `football_agents.task_captain`).
     *   Convert the `captain_agent` into a Starlette app: `app = to_a2a(captain_agent, host=HOST, port=PORT)`.
@@ -141,10 +141,10 @@ We have broken the development into 5 progressive tasks. You will start with a s
 
 ### 🌉 Task 3: Bridge the Coach and Captain (A2A Network Hop)
 *   **Objective**: Connect your local Coach (`task_agent.py`) to the remote Captain (`task_captain_server.py`) over the A2A protocol.
-*   **File to Edit**: [football_agents/task_agent.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_agent.py)
+*   **File to Edit**: [football_agents/task_agent.py](football_agents/task_agent.py)
 
 #### 📝 Instructions:
-1.  Open [task_agent.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_agent.py).
+1.  Open [task_agent.py](football_agents/task_agent.py).
 2.  Import `RemoteA2aAgent` and `AGENT_CARD_WELL_KNOWN_PATH` from `google.adk.agents.remote_a2a_agent`.
 3.  Define `team_captain_remote` using `RemoteA2aAgent`, passing it the Captain's A2A URL (`CAPTAIN_A2A_URL`).
 4.  Update the Coach (`coach_agent`) configuration:
@@ -167,8 +167,8 @@ We have broken the development into 5 progressive tasks. You will start with a s
 ### 🛡️ Task 4: Specialists, Orchestration & Environmental Control (End-to-End)
 *   **Objective**: Implement multi-agent delegation, prompt-based attribute mapping, and environmental tool-use to control the Phaser game.
 *   **Files to Edit**:
-    1.  [football_agents/specialist_agents/task_defender.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/specialist_agents/task_defender.py) (and other task specialists: `task_midfielder.py`, `task_forward.py`, `task_goalkeeper.py`).
-    2.  [football_agents/task_captain.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/task_captain.py)
+    1.  [football_agents/specialist_agents/task_defender.py](football_agents/specialist_agents/task_defender.py) (and other task specialists: `task_midfielder.py`, `task_forward.py`, `task_goalkeeper.py`).
+    2.  [football_agents/task_captain.py](football_agents/task_captain.py)
 
 #### 📝 Instructions:
 1.  **Define the Specialists**: Open `task_defender.py`.
@@ -203,7 +203,7 @@ We have broken the development into 5 progressive tasks. You will start with a s
 
 ### ⚠️ Task 5: Autonomous MCP Self-Reporting (Added Bonus)
 *   **Objective**: Connect agents to external tool servers using the **Model Context Protocol (MCP)** to enable autonomous status reporting.
-*   **Files to Edit**: [football_agents/specialist_agents/task_defender.py](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB02/football_agents/specialist_agents/task_defender.py) (and other task specialists).
+*   **Files to Edit**: [football_agents/specialist_agents/task_defender.py](football_agents/specialist_agents/task_defender.py) (and other task specialists).
 
 #### 📝 Instructions:
 1.  Open `task_defender.py`.
