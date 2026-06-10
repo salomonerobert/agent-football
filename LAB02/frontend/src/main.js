@@ -301,7 +301,7 @@ rematchBtn.addEventListener('click', () => {
   document.getElementById('game-over-screen').classList.remove('active');
 
   appendTerminalLine("system", `> 🔄 Rematch clicked: Restoring starting baseline profiles...`);
-  
+
   // Restore profiles to LAB01 starting baseline before restarting
   sendInstructionToAgent("RESTORE_BASELINE", { showHuddle: false }).then(() => {
     loadProfiles(); // Reload the fresh baseline profiles
@@ -337,7 +337,7 @@ let currentHuddleData = null;
 async function sendInstructionToAgent(msg, options = {}) {
   const { showHuddle = true } = options;
   currentHuddleData = null; // Reset for this run
-  
+
   try {
     const outgoingMsg = `${msg}\n\n${getFitnessReport()}`;
 
@@ -352,7 +352,7 @@ async function sendInstructionToAgent(msg, options = {}) {
     // 1. Create a session if we don't have one
     if (!currentSessionId) {
       console.log("Creating new agent session...");
-      const sessionRes = await fetch('/apps/football_agents/users/user/sessions', {
+      const sessionRes = await fetch('/api-apps/football_agents/users/user/sessions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -409,7 +409,7 @@ async function sendInstructionToAgent(msg, options = {}) {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
-      
+
       // Keep the last incomplete line in the buffer
       buffer = lines.pop() || "";
 
@@ -485,7 +485,7 @@ function processAgentEvent(event) {
   // 3. Check for Specialist actions (updating profile or MCP)
   if (author && author.endsWith("Specialist")) {
     const role = author.replace("Specialist", "").toLowerCase();
-    
+
     if (content && content.parts) {
       for (const part of content.parts) {
         // Tool Calls (update_profile or MCP)

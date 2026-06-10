@@ -51,13 +51,13 @@ LAB01 is a web portal where you customize your team's visual identity (generatin
 2.  Start the FastAPI server:
     *   **To run your task template (for development)**:
         ```bash
-        uvicorn app_task:app --host 127.0.0.1 --port 8001 --reload
+        uvicorn app_task:app --host 127.0.0.1 --port 8002 --reload
         ```
     *   **To run the completed reference solution**:
         ```bash
-        uvicorn app:app --host 127.0.0.1 --port 8001 --reload
+        uvicorn app:app --host 127.0.0.1 --port 8002 --reload
         ```
-3.  Open `http://127.0.0.1:8001` in your browser.
+3.  Open `http://127.0.0.1:8002` in your browser.
 4.  Configure your team, click **"Generate Avatars"**, then **"Save Player Profiles"** to send the assets and tactics directly to LAB02.
 
 ---
