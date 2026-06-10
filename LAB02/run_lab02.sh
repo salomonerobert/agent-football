@@ -81,7 +81,7 @@ sleep 2
 # 3. Start Frontend
 echo "--> Starting Frontend server (Vite)..."
 cd frontend
-npm install &
+npm install &&
 npm run dev &
 PIDS+=($!)
 cd ..

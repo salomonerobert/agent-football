@@ -305,14 +305,14 @@ In `LAB02`, we will split our monolithic Coach setup into a distributed network 
 
 *   **Solution**:
     
-    ```python
+    <ql-code-block language="python">
     instruction="""You are the head coach on the touchline. 
     
     ... existing instructions...
     
     TACTICAL SHOUTS:
     For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging 1-sentence shout! Do NOT call any sub-agents yet."""
-    ```
+    </ql-code-block>
 
 ---
 
@@ -330,14 +330,14 @@ After monolith coach, lets create our first A2A server for the captain agent. In
     4. Write a simple starting instruction (e.g. "You are the captain. Respond to shouts with a player-style greeting.").
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     captain_agent = LlmAgent(
         name="TeamCaptain",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="The team captain who relays coach shouts to the outfield players.",
         instruction="""You are the team captain. Respond to the Coach's instruction with a simple players-style greeting (e.g. 'Captain here, ready to lead!'). Leave tools empty for now."""
     )
-    ```
+    </ql-code-block>
 
 Exciting stuff !! We have a captain now; but the coach does not yet have a way to reach out to this captain agent. We need to make our new little agent, discoverable by the coach agent. 
 This is where A2A comes into play. We can wrap our A2A server to expose our agent on a port, such that coach agent can reach out to it. But we're not there yet; first let us import the necessary utilities
@@ -347,11 +347,11 @@ This is where A2A comes into play. We can wrap our A2A server to expose our agen
 *   **Objective** : Import the necessary utilities to wrap the captain agent as a standalone A2A server.
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     from google.adk.a2a.utils.agent_to_a2a import to_a2a
     import uvicorn
     from football_agents.captain import captain_agent
-    ```
+    </ql-code-block>
 
 #### TASK 2c: Build and Run the A2A Agent 
 *   Under file `LAB02/football_agents/captain_server.py` locate and review the comment `# TODO: Task 2c`
@@ -361,7 +361,7 @@ This is where A2A comes into play. We can wrap our A2A server to expose our agen
         3. In the `__main__` block, use `uvicorn.run` to start the server.
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     HOST = os.environ.get("CAPTAIN_HOST", "localhost")
     PORT = int(os.environ.get("CAPTAIN_PORT", "8001"))
 
@@ -369,7 +369,7 @@ This is where A2A comes into play. We can wrap our A2A server to expose our agen
 
     if __name__ == "__main__":
         uvicorn.run(app, host=HOST, port=PORT)
-    ```
+    </ql-code-block>
 
 ---
 
@@ -388,7 +388,7 @@ Now, you will configure the Coach agent to stop responding directly and instead 
     3. `CAPTAIN_A2A_URL` is defined as `http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}`
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     from google.adk.agents.remote_a2a_agent import RemoteA2aAgent, AGENT_CARD_WELL_KNOWN_PATH
 
     CAPTAIN_A2A_URL = os.environ.get("CAPTAIN_A2A_URL", f"http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}")
@@ -398,7 +398,7 @@ Now, you will configure the Coach agent to stop responding directly and instead 
         description="The team captain, reachable over the A2A protocol.",
         agent_card=CAPTAIN_A2A_URL,
     )
-    ```
+    </ql-code-block>
 Now that the coach can "reach" captain; lets modify our coach instruction to delegate the tactical shouts to the captain instead of responding directly.
 
 #### TASK 3b: Update Coach Prompt to now start relaying instructions to the Captain
@@ -408,7 +408,7 @@ Now that the coach can "reach" captain; lets modify our coach instruction to del
     2. Add the captain to the `sub_agents` list.
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     coach_agent = LlmAgent(
         name="ManagerAgent",
         model=GeminiConstants.GEMINI_FLASH_LITE,
@@ -426,7 +426,7 @@ Now that the coach can "reach" captain; lets modify our coach instruction to del
         tools=[backup_baseline_profiles, restore_baseline_profiles],
         sub_agents=[team_captain_remote],
     )
-    ```
+    </ql-code-block>
 ---
 
 We have Coach and Captain ready and talking to each other, but they are not yet talking to the players. In the next step, we will define specialist player agents and equip them with the `update_profile` tool.
@@ -446,7 +446,7 @@ We have Coach and Captain ready and talking to each other, but they are not yet 
 *   **Solution**:
     Here is the template for `defender.py`. *(Implement similar definitions in `midfielder.py`, `forward.py`, and `goalkeeper.py` using their specific role attributes noted in the files).*
 
-    ```python
+    <ql-code-block language="python">
     defender_agent = LlmAgent(
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
@@ -476,7 +476,7 @@ We have Coach and Captain ready and talking to each other, but they are not yet 
         tools=[update_profile],
         output_key="defender_response"
     )
-    ```
+    </ql-code-block>
     
 ---
 
@@ -492,7 +492,7 @@ Now that all player agents have been defined and are ready to go, next step is t
 
 *   **Solution**:
 
-    ```python
+    <ql-code-block language="python">
     # Task 5a
     from google.adk.tools import AgentTool
     from football_agents.specialist_agents.defender import defender_agent
@@ -535,7 +535,7 @@ Now that all player agents have been defined and are ready to go, next step is t
             AgentTool(goalkeeper_agent)
         ]
     )
-    ```
+    </ql-code-block>
 ---
 
 ## TASK 6: Autonomous Condition Reporting (FastMCP Integration) (Optional)
@@ -553,7 +553,7 @@ This bonus step connects the player agents to an external Model Context Protocol
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
 *   **ToDo to look for**: Locate the comment `# TODO: Task 6b - Equip MCP Toolset & Prompt Guidance`.
 *   **Code to fill in**:
-    ```python
+    <ql-code-block language="python">
     defender_agent = LlmAgent(
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
@@ -561,7 +561,7 @@ This bonus step connects the player agents to an external Model Context Protocol
         tools=[update_profile, make_condition_toolset()],
         output_key="defender_response"
     )
-    ```
+    </ql-code-block>
 *   **What this code does**: Appends the MCP reporting guidelines to your player's instructions and equips the agent's toolbelt with `make_condition_toolset()`. This establishes a stdio-based JSON-RPC connection to the FastMCP server when running checkups.
 #### Task 6c: Enable the Real MCP Server (Optional)
 *   **File to edit**: `LAB02/football_agents/specialist_agents/tools.py`
