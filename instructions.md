@@ -87,10 +87,10 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
 In this section, you will write the backend code to communicate with Gemini for spritesheet generation.
 
 ### Task 1: Initialize the Gemini Client
-Open `LAB01/app_task.py` and replace the placeholder client initialization code with the standard GenAI SDK setup.
+Open `LAB01/task_app.py` and replace the placeholder client initialization code with the standard GenAI SDK setup.
 
 ```python
-# app_task.py (Task 1)
+# task_app.py (Task 1)
 from google import genai
 
 # Initialize the Gemini Client using the default client constructor
@@ -101,7 +101,7 @@ client = genai.Client()
 To ensure that both the outfield player and the goalkeeper share the same colors, visual details, and style, you will spawn them in a single ongoing chat session.
 
 ```python
-# app_task.py (Task 2)
+# task_app.py (Task 2)
 # Create a brand new async chat session for this team using client.aio.chats.create.
 # Model to use: "publishers/google/models/gemini-2.0-flash-exp"
 chat = client.aio.chats.create(model="publishers/google/models/gemini-2.0-flash-exp")

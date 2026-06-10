@@ -51,7 +51,7 @@ LAB01 is a web portal where you customize your team's visual identity (generatin
 2.  Start the FastAPI server:
     *   **To run your task template (for development)**:
         ```bash
-        uvicorn app_task:app --host 127.0.0.1 --port 8002 --reload
+        uvicorn task_app:app --host 127.0.0.1 --port 8002 --reload
         ```
     *   **To run the completed reference solution**:
         ```bash

@@ -34,7 +34,7 @@ Before writing any code, you need to configure your Google Cloud credentials so 
 ---
 
 ### 🔌 Task 1: Initialize the Gemini Client
-Open [`LAB01/app_task.py`](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB01/app_task.py) and locate **`Task 1`** (around line 40).
+Open [`LAB01/task_app.py`](file:///usr/local/google/home/piyasharma/Documents/Sourcecode/code-the-coach/repo/agent-football/LAB01/task_app.py) and locate **`Task 1`** (around line 40).
 
 Your task is to initialize the GenAI client. The client automatically reads the `GOOGLE_CLOUD_PROJECT` variable you set in Task 0 to authenticate.
 
@@ -117,7 +117,7 @@ Open [`LAB01/prompts.py`](file:///usr/local/google/home/piyasharma/Documents/Sou
 2.  Start the FastAPI server using your task file:
     ```bash
     cd LAB01
-    uvicorn app_task:app --host 127.0.0.1 --port 8002 --reload
+    uvicorn task_app:app --host 127.0.0.1 --port 8002 --reload
     ```
 3.  Open your browser and navigate to `http://127.0.0.1:8002`.
 4.  Fill in the team configuration grid and click **"Generate Avatars"**. 
