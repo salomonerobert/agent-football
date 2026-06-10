@@ -1,7 +1,9 @@
+![Agentic Football Banner](img/banner.png)
+
 # ⚽ Agentic Football Workshop - Developer & Maintainer Guide
 
 > [!NOTE]
-> This document is intended strictly for developers, maintainers, and authors of the Agentic Football Workshop codebase. If you are a workshop participant, please follow the student-facing instructions in [INSTRUCTIONS.md](INSTRUCTIONS.md).
+> This document is intended strictly for developers, maintainers, and authors of the Agentic Football Workshop codebase. If you are a workshop participant, please follow the student-facing instructions in [LAB_INSTRUCTIONS.md](LAB_INSTRUCTIONS.md).
 
 This repository contains the source code, Phaser engine assets, and Agent Development Kit (ADK) configurations for a 5v5 interactive LLM soccer simulator workshop. The codebase is divided into two primary sections: **LAB01** (asset generation and custom onboarding) and **LAB02** (the live multi-agent simulation).
 
@@ -15,7 +17,7 @@ The workspace is structured to separate concerns between frontend simulation lay
 agent-football/
 ├── mask.sh                      # Root masking script to overwrite solution files with templates
 ├── LICENSE.md                   # Apache 2.0 license file
-├── INSTRUCTIONS.md              # Workshop student activity instructions
+├── LAB_INSTRUCTIONS.md          # Workshop student activity instructions
 ├── ToDo.md                      # Release tracking tasklist
 ├── LAB01/                       # Onboarding & asset generation portal
 │   ├── app.py                   # Solved FastAPI backend

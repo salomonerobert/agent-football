@@ -13,7 +13,7 @@ All notable changes to the **Agentic Football Workshop** project are documented 
 
 ### 🔧 Changed
 - **Port Standardization**: Changed LAB01 port to `8002` across all FastAPI server definitions, frontend shout handlers, and documentation to avoid port collisions with other default services.
-- **Documentation Portability**: Converted all local absolute machine paths (e.g. `/usr/local/google/...` or `/Users/...`) in `README.md`, `LAB01/README.md`, `LAB02/README.md`, and `INSTRUCTIONS.md` to relative links.
+- **Documentation Portability**: Converted all local absolute machine paths (e.g. `/usr/local/google/...` or `/Users/...`) in `README.md`, `LAB01/README.md`, `LAB02/README.md`, and `LAB_INSTRUCTIONS.md` to relative links.
 - **Legal Compliance**: Prepended Apache 2.0 license comment headers to all 32 python, javascript, and shell code files.
 
 ### 🧹 Removed
