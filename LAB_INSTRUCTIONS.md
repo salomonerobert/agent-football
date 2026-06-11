@@ -233,13 +233,8 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
-<<<<<<< HEAD
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
-    <ql-code-block language="bash">
-=======
-1. In cloud shell terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
     ```bash
->>>>>>> lfs-sync
     cd LAB01
     </ql-code-block>
 2. Start the FastAPI development server:
