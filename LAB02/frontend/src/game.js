@@ -71,6 +71,8 @@ export class SoccerGameScene extends Phaser.Scene {
       frameHeight: 768
     });
 
+    this.load.image('goalkeeper_blue', '/assets/sprites/goalkeeper_blue_team.png');
+    this.load.image('goalkeeper_red', '/assets/sprites/goalkeeper_red_team.png');
     this.load.image('goalkeeper', '/assets/sprites/goalkeeper.png');
   }
 
@@ -184,23 +186,23 @@ export class SoccerGameScene extends Phaser.Scene {
     }
 
     // 6. AI Goalkeeper 1 (Left Goal)
-    this.gk1 = this.physics.add.sprite(180, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk1 = this.physics.add.sprite(180, 380, 'goalkeeper_blue', 'goalkeeper_blue_ready_0');
     this.gk1.setScale(0.22);
     this.gk1.setCollideWorldBounds(true);
     this.gk1.body.setImmovable(true);
-    this.gk1.play('gk_ready');
+    this.gk1.play('gk_blue_ready');
     this.gk1.body.setSize(120, 160);
     this.gk1.body.setOffset(40, 20);
     this.gk1.setData('team', 1);
     this.gk1.setData('role', 'goalkeeper');
 
     // 7. AI Goalkeeper 2 (Right Goal)
-    this.gk2 = this.physics.add.sprite(1228, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk2 = this.physics.add.sprite(1228, 380, 'goalkeeper_red', 'goalkeeper_red_ready_0');
     this.gk2.setScale(0.22);
     this.gk2.setFlipX(true);
     this.gk2.setCollideWorldBounds(true);
     this.gk2.body.setImmovable(true);
-    this.gk2.play('gk_ready');
+    this.gk2.play('gk_red_ready');
     this.gk2.body.setSize(120, 160);
     this.gk2.body.setOffset(40, 20);
     this.gk2.setData('team', 2);
@@ -1201,19 +1203,31 @@ export class SoccerGameScene extends Phaser.Scene {
     const trackingSpeed = (profile && profile.trackingSpeed !== undefined) ? profile.trackingSpeed : 0.08;
     gk.x += (targetX - gk.x) * trackingSpeed;
 
+    const isDiving = gk.anims.isPlaying && gk.anims.currentAnim && gk.anims.currentAnim.key.includes('dive');
+
     if (defendingArea) {
       const targetY = Phaser.Math.Clamp(ballY, 280, 480);
       gk.y += (targetY - gk.y) * trackingSpeed;
 
       const triggerDistance = isBlue ? 280 : 1128;
       const isClose = isBlue ? ballX < triggerDistance : ballX > triggerDistance;
-      if (isClose && Math.abs(ballY - gk.y) > 35 && !gk.anims.isPlaying && Math.random() < (profile.diveChance || 0.1)) {
+      if (isClose && Math.abs(ballY - gk.y) > 35 && !isDiving && Math.random() < (profile.diveChance || 0.1)) {
         const isDivingUp = ballY < gk.y;
-        gk.play(isDivingUp ? (isBlue ? 'gk_dive_left' : 'gk_dive_right') : (isBlue ? 'gk_dive_right' : 'gk_dive_left'));
+        const diveLeftAnim = isBlue ? 'gk_blue_dive_left' : 'gk_red_dive_left';
+        const diveRightAnim = isBlue ? 'gk_blue_dive_right' : 'gk_red_dive_right';
+        gk.play(isDivingUp ? (isBlue ? diveLeftAnim : diveRightAnim) : (isBlue ? diveRightAnim : diveLeftAnim));
         Sound.playJump();
       }
     } else {
       gk.y += (380 - gk.y) * 0.05;
+    }
+
+    // Reset to ready animation if not diving and ready is not already playing
+    if (!isDiving) {
+      const readyAnim = isBlue ? 'gk_blue_ready' : 'gk_red_ready';
+      if (!gk.anims.currentAnim || gk.anims.currentAnim.key !== readyAnim) {
+        gk.play(readyAnim);
+      }
     }
   }
 
@@ -1693,8 +1707,15 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 1168, w: 205 }
     ];
     
-    readyCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_ready_${idx}`, 0, coord.x, 49, coord.w, 198);
+    const keys = [];
+    if (this.textures.exists('goalkeeper_blue')) keys.push('goalkeeper_blue');
+    if (this.textures.exists('goalkeeper_red')) keys.push('goalkeeper_red');
+    if (this.textures.exists('goalkeeper')) keys.push('goalkeeper');
+
+    keys.forEach(key => {
+      readyCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_ready_${idx}`, 0, coord.x, 49, coord.w, 198);
+      });
     });
 
     const diveLeftCoords = [
@@ -1704,8 +1725,10 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 856, w: 252 },
       { x: 1119, w: 254 }
     ];
-    diveLeftCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_dive_left_${idx}`, 0, coord.x, 307, coord.w, 180);
+    keys.forEach(key => {
+      diveLeftCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_dive_left_${idx}`, 0, coord.x, 307, coord.w, 180);
+      });
     });
 
     const diveRightCoords = [
@@ -1715,49 +1738,137 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 850, w: 253 },
       { x: 1119, w: 254 }
     ];
-    diveRightCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_dive_right_${idx}`, 0, coord.x, 556, coord.w, 177);
+    keys.forEach(key => {
+      diveRightCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_dive_right_${idx}`, 0, coord.x, 556, coord.w, 177);
+      });
     });
 
-    this.anims.create({
-      key: 'gk_ready',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_4' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_5' }
-      ],
-      frameRate: 6,
-      repeat: -1
-    });
+    if (this.textures.exists('goalkeeper_blue')) {
+      this.anims.create({
+        key: 'gk_blue_ready',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_4' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
 
-    this.anims.create({
-      key: 'gk_dive_left',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_4' }
-      ],
-      frameRate: 8,
-      repeat: 0
-    });
+      this.anims.create({
+        key: 'gk_blue_dive_left',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
 
-    this.anims.create({
-      key: 'gk_dive_right',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_4' }
-      ],
-      frameRate: 8,
-      repeat: 0
-    });
+      this.anims.create({
+        key: 'gk_blue_dive_right',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
+
+    if (this.textures.exists('goalkeeper_red')) {
+      this.anims.create({
+        key: 'gk_red_ready',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_4' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'gk_red_dive_left',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+
+      this.anims.create({
+        key: 'gk_red_dive_right',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
+
+    if (this.textures.exists('goalkeeper')) {
+      this.anims.create({
+        key: 'gk_ready',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_4' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'gk_dive_left',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+
+      this.anims.create({
+        key: 'gk_dive_right',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
   }
 
 

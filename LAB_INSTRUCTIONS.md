@@ -140,17 +140,25 @@ Before starting the implementation, you must set up your Python virtual environm
 
 To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex AI API for your project and establish credentials.
 
-1. Authenticate your Cloud Shell session:
+1. Authenticate your Cloud Shell CLI session:
+    <ql-code-block language="bash">
+    gcloud auth login
+    </ql-code-block>
+    *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
+
+2. Authenticate application default credentials:
     <ql-code-block language="bash">
     gcloud auth application-default login
     </ql-code-block>
 
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
-2. Run the following command to enable the Vertex AI service:
+3. Run the following command to enable the Vertex AI service:
     <ql-code-block language="bash">
     gcloud services enable aiplatform.googleapis.com
     </ql-code-block>
+
+> 💡 **Tip / Troubleshooting**: If you experience UI sync issues or if instructions aren't taking effect, always remember to perform a **hard refresh** (`CMD + Shift + R` on Mac, `Ctrl + F5` on Windows/Linux) on the lab page to load the latest interface and clear cached scripts.
 
 ---
 
@@ -237,6 +245,7 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
     <ql-code-block language="bash">
+    <ql-code-block language="bash">
     cd LAB01
     </ql-code-block>
 
@@ -253,10 +262,12 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 ---
 ## Verification
 
-In order to verify the artifacts you have generated for your play, check the following paths in your workspace
+In order to verify the artifacts you have generated for your play, check the following paths in your workspace:
 
-1. LAB02/public/player_state/player_name.json files :  These files should reflect the configured player persona.
-2. LAB02/public/assets/sprites/player_<team_color>.png and LAB02/public/assets/sprites/golakeeper_<team_color>.png should reflect the avatars you created.
+1. `LAB02/frontend/public/player_state/*.json` files: These files should reflect the configured tactical player attributes.
+2. `LAB02/frontend/public/assets/sprites/player_<team_color>.png` and `LAB02/frontend/public/assets/sprites/goalkeeper_<team_color>.png` should reflect the multimodal avatars you created.
+
+> ℹ️ **Goalkeeper Sprite Dimensions & Scaling**: You might notice that in the game client, outfield players and goalkeepers are scaled differently (`0.07` vs `0.22`). This is intentional and perfectly normal! Because the Goalkeeper spritesheet contains 16 frames packed into 3 rows whereas the Outfield Player spritesheet contains only 4 frames in a single row, the individual goalkeeper sprite frames are smaller in pixel resolution. The game engine automatically compensates for this differential scaling so character sizes remain perfectly consistent on the pitch. You do not need to generate goalkeeper sprites in a larger size.
 
 ---
 
@@ -318,6 +329,23 @@ In `LAB02`, we will start with a monolithic Coach setup and refactor it into a d
     For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging one sentence shout! Do NOT call any subagents yet."""
     </ql-code-block>
 
+### 🏃 Interim Test: Execute Monolithic Coach
+
+Before refactoring into a distributed multi-agent hierarchy, let's run the simulation now to observe how a monolithic agent behaves. This will give you a visual baseline to compare against later when we implement relayed multi-agent responses.
+
+1. In your terminal, navigate to `LAB02`:
+    <ql-code-block language="bash">
+    cd LAB02
+    </ql-code-block>
+2. Launch the simulation services:
+    <ql-code-block language="bash">
+    bash run_lab02.sh
+    </ql-code-block>
+3. Open `http://localhost:5173` in your browser and click **Kick Off!**.
+4. Type a shout in the Coach Bar (e.g., "everyone attack").
+5. **Observe**: The Head Coach responds directly with a humorous touchline quote in the huddle log. Notice that no instructions are relayed to sub-agents, and no player attributes change on the pitch.
+6. When done testing, press `Ctrl+C` in your terminal to stop the services.
+
 ---
 
 ## TASK 2: Define and Expose the Captain Agent 
@@ -339,7 +367,7 @@ After monolith coach, lets create our first A2A server for the captain agent. In
         name="TeamCaptain",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="The team captain who relays coach shouts to the outfield players.",
-        instruction="""You are the team captain. Respond to the Coach's instruction with a simple players style greeting (e.g. 'Captain here, ready to lead!'). Leave tools empty for now."""
+        instruction="""You are the team captain. Respond to the Coach's instruction with a simple players style greeting (e.g. 'Captain here, ready to lead!')."""
     )
     </ql-code-block>
 
@@ -572,12 +600,13 @@ This bonus step connects the player agents to an external Model Context Protocol
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         instruction="""Your prompt instructions...""" + CONDITION_GUIDANCE,
-        tools=[update_profile, make_condition_toolset()],
+        tools=[update_profile, *make_condition_toolset()],
         output_key="defender_response"
     )
     </ql-code-block>
 
 *   **What this code does**: Appends the MCP reporting guidelines to your player's instructions and equips the agent's toolbelt with `make_condition_toolset()`. This establishes a stdio-based JSON-RPC connection to the FastMCP server when running checkups.
+*   **⚠️ Important Syntax Note**: Since `make_condition_toolset()` returns a **list** of tools, putting it directly inside the tools list (e.g. `[update_profile, make_condition_toolset()]`) will cause a nested list error in Python. You MUST unpack the list using the `*` operator as shown above: `tools=[update_profile, *make_condition_toolset()]`.
 #### Task 6c: Enable the Real MCP Server (Optional)
 *   **File to edit**: `LAB02/football_agents/specialist_agents/tools.py`
 *   **Code to change**:
@@ -611,6 +640,8 @@ To launch the multi-agent simulation workspace:
 3.  Open `http://localhost:5173` in your browser.
 4.  Click **Kick Off!** to start the match!
 5.  Type screams in the shout bar (e.g., "everyone attack", "play defensive") and observe the huddle bubble reactions and attributes shifting in real-time
+
+> 🔍 **Debugging & Troubleshooting**: The huddle log panel in the web UI is designed for high-level visibility to show that agent layers are active. If you have coding syntax typos (e.g. misspelled attributes, missing brackets, list nesting errors), the UI may freeze or fail silently. **Always check your terminal output** where you ran `run_lab02.sh` or your python servers—it contains the full, granular error traceback from python to help you identify typos instantly.
 
 ---
 

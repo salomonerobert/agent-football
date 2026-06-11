@@ -218,6 +218,8 @@ def update_profile(role: str, changes: dict) -> str:
         return f"File error: {str(e)}"
 
 
+# TODO: Task 6c - Enable the Real MCP Server (Optional)
+# Locate the USE_REAL_MCP_SERVER flag and toggle it to True
 USE_REAL_MCP_SERVER = False
 
 def dummy_report_injury(role: str, severity: str = "knock") -> str:

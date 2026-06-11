@@ -16,6 +16,12 @@
 # Head Coach Agent (ManagerAgent) - TEMPLATE
 # =====================================================================
 
+# =====================================================================
+# 🧭 TODO: TASK 1 NAVIGATION ANCHOR
+# Looking for TODO: Task 1? It is located below on line 57 inside coach_agent!
+# (Task 3a is placed at line 35 for Python variable/import ordering)
+# =====================================================================
+
 import os
 from dotenv import load_dotenv
 
