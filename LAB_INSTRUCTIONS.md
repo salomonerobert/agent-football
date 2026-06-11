@@ -152,7 +152,7 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
 
 ---
 
-## LAB01: Avatar Creation & Style Consistent Chat Sessions
+## LAB-01: Avatar Creation & Player Profiles
 
 In this section, you will write the backend code to communicate with Gemini for spritesheet generation.
 
@@ -224,6 +224,7 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 </ql-code>
 
 
+
 *   **Hint**: You just sent the player and goalkeeper prompts to the active chat session. Because both run sequentially in the same chat session, the Goalkeeper inherits the outfield player's style.
 
 ---
@@ -232,7 +233,7 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
-1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
+1. In cloud shell terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
     ```bash
     cd LAB01
     ```
@@ -246,14 +247,13 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 6. Tweak the default behavior sliders (e.g. speed, positioning) for each player, then click **💾 Save Player Profiles** to write your starting configurations to disk.
 
 ---
-## LAB01 Verification
+## Verification
 
 In order to verify the artifacts you have generated for your play, check the following paths in your workspace
 
-1. LAB02/public/player_state/<player>.json files :  These files should reflect the configured player persona.
+1. LAB02/public/player_state/player_name.json files :  These files should reflect the configured player persona.
 2. LAB02/public/assets/sprites/player_<team_color>.png and LAB02/public/assets/sprites/golakeeper_<team_color>.png should reflect the avatars you created.
 
-Now that we have our playground set, let's move on to the next step.
 ---
 
 ### 🧩 LAB01 Checkpoint Questions
@@ -293,13 +293,13 @@ Now that we have our playground set, let's move on to the next step.
 
 ---
 
-## LAB02: Creating the A2A (Agent-to-Agent) Servers
+## LAB-02: Multi-Agentic Football Arena
 
-In `LAB02`, we will split our monolithic Coach setup into a distributed network of agents communicating over standard A2A (Agent-to-Agent) and MCP protocols.
+In `LAB02`, we will start with a monolithic Coach setup and refactor it into a distributed network of agents communicating over standard A2A (Agent-to-Agent) and MCP protocols.
 
 ---
 
-## TASK 1: Give the coach some light-hearted TACTICAL SHOUT instructions
+## TASK 1: Monolithic Coach with Tactical Shouts
 *   Under file `LAB02/football_agents/agent.py` locate and review the comment `# TODO: Task 1`
 *   **Objective** : At this stage, the Coach is a "monolith" agent, meaning it responds directly to user shouts using a humorous response format. Instruct the coach to respond directly to tactical shouts with a funny, encouraging quote (e.g. "Alright lads, let's attack!").
 
@@ -316,7 +316,7 @@ In `LAB02`, we will split our monolithic Coach setup into a distributed network 
 
 ---
 
-## TASK 2: Define and Expose the Captain Agent (A2A Server)
+## TASK 2: Define and Expose the Captain Agent 
 
 After monolith coach, lets create our first A2A server for the captain agent. In this step, you will wrap the captain agent as a standalone A2A server listening on port `8001`.
 
@@ -373,10 +373,11 @@ This is where A2A comes into play. We can wrap our A2A server to expose our agen
 
 ---
 
+## TASK 3: Build the Coach-Captain Bridge (A2A)
+
 This is going to be fun !! Now we have a coach and a captain, and both are standing on different physical or virtual machines, but wait.. how will they talk to each other ?
 
-## TASK 3: Build the Coach-Captain Bridge (A2A)
-Now, you will configure the Coach agent to stop responding directly and instead delegate instructions to the Captain over the network.
+For this, we will configure the Coach agent to stop responding directly and instead delegate instructions to the Captain over the network.
 
 #### Task 3a: Connect the coach with captain
 *   Under `LAB02/football_agents/agent.py` locate and review `# TODO: Task 3a `
@@ -429,9 +430,10 @@ Now that the coach can "reach" captain; lets modify our coach instruction to del
     ```
 ---
 
-We have Coach and Captain ready and talking to each other, but they are not yet talking to the players. In the next step, we will define specialist player agents and equip them with the `update_profile` tool.
+## TASK 4: Define Specialist Player Agents 
 
-## TASK 4: Define Player Specialists & Attribute Mapping
+We have Coach and Captain ready and talking to each other, but they are not yet talking to the players. In this step, we will define specialist player agents and equip them with the `update_profile` tool.
+
 
 #### TASK 4a: Define the Specialist Player Agents
 *   Under each of the following files, locate and review the comment `# TODO: Task 4a`
@@ -452,7 +454,7 @@ We have Coach and Captain ready and talking to each other, but they are not yet 
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="Handles tactical instructions and attribute updates for the DEFENDER role.",
         instruction="""You are a gritty, no-nonsense Defender on the football pitch.
-        The team captain is relaying an instruction to you. If the instruction is general (e.g., 'everyone attack', 'play aggressively') or specifically for defenders, use the `update_profile` tool to update the 'defender' role attributes.
+        The team captain is relaying an instruction to you. If the instruction is general (e.g., 'everyone attack', 'play aggressively') or specifically for defenders, use the update_profile tool to update the defender role attributes.
         If the instruction is explicitly ONLY for another role (e.g., 'forwards only, shoot more'), do NOT use the tool.
 
         IMPORTANT: You must affect ALL attributes that logically align with the command, rather than just modifying one or two.
@@ -479,6 +481,8 @@ We have Coach and Captain ready and talking to each other, but they are not yet 
     ```
     
 ---
+
+## TASK 5: Orchestrate Captain and Specialist Agents
 
 Now that all player agents have been defined and are ready to go, next step is to connect them to the captain agent. You would have noticed that up until now none of the changes have touched the captain agent file. We have kept it out intentionally to make the changes more manageable. We will now import and register these agents as tools to the captain agent.
 
@@ -509,22 +513,22 @@ Now that all player agents have been defined and are ready to go, next step is t
         (and may have attached a short fitness/tiredness report for some players).
 
         Your job is to relay tactics DOWN to your teammates. You have one tool per player:
-        `DefenderSpecialist`, `MidfielderSpecialist`, `ForwardSpecialist`, `GoalkeeperSpecialist`.
+        DefenderSpecialist, MidfielderSpecialist, ForwardSpecialist, GoalkeeperSpecialist.
 
         STEP 1 — DELEGATE: Call the tool for EVERY player the instruction is relevant to (a general
         instruction like "everyone attack" applies to all four). Pass each player a clear instruction in
         their own words. 
 
-        STEP 2 — REPORT BACK: After gathering the players' short verbal responses, output ONLY a valid
+        STEP 2 — REPORT BACK: After gathering the players short verbal responses, output ONLY a valid
         JSON object with EXACTLY this structure (no markdown, no extra text):
         {
         "status": "Short confirmation that tactics were executed",
-        "huddle": {
-            "defender": "The defender's exact quote (or a brief stand-in if not addressed)",
-            "midfielder": "The midfielder's exact quote",
-            "forward": "The forward's exact quote",
-            "goalkeeper": "The goalkeeper's exact quote"
-        }
+            "huddle": {
+                "defender": "The defender's exact quote (or a brief stand-in if not addressed)",
+                "midfielder": "The midfielder's exact quote",
+                "forward": "The forward's exact quote",
+                "goalkeeper": "The goalkeeper's exact quote"
+            }
         }
         Every huddle key MUST be present. Use the players' actual returned quotes where you called them.""",
 
@@ -576,7 +580,7 @@ This bonus step connects the player agents to an external Model Context Protocol
 
 We are at the last leg of this lab. We will now try to launch and test the simulation.
 
-## TASK 7: Verification
+## Run the Simulation & Go For It !!
 
 To launch the multi-agent simulation workspace:
 
@@ -592,7 +596,7 @@ To launch the multi-agent simulation workspace:
     *(This script automatically cleans up local SQLite DB locks, swaps your task file templates, and spawns the Frontend Vite dev server on `http://localhost:5173`, the Captain Server on `8001`, and the Coach Server on `8000`).*
 3.  Open `http://localhost:5173` in your browser.
 4.  Click **Kick Off!** to start the match!
-5.  Type screams in the shout bar (e.g., "everyone attack", "play defensive") and observe the huddle bubble reactions and attributes shifting in real-time.
+5.  Type screams in the shout bar (e.g., "everyone attack", "play defensive") and observe the huddle bubble reactions and attributes shifting in real-time
 
 ---
 
