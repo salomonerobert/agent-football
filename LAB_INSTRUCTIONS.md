@@ -153,7 +153,12 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
 
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
-3. Run the following command to enable the Vertex AI service:
+3. Set config project to your project ID:
+    <ql-code-block language="bash">
+    gcloud config set project <project-id>
+    </ql-code-block>
+
+4. Run the following command to enable the Vertex AI service:
     <ql-code-block language="bash">
     gcloud services enable aiplatform.googleapis.com
     </ql-code-block>
@@ -337,14 +342,20 @@ Before refactoring into a distributed multi-agent hierarchy, let's run the simul
     <ql-code-block language="bash">
     cd LAB02
     </ql-code-block>
-2. Launch the simulation services:
+2. Install additional dependencies:
+    <ql-code-block language="bash">
+    pip install -r football_agents/requirements.txt
+    </ql-code-block>
+3. Remove redundant instructions to coach temporarily:
+    Remove lines 64 and 65 of agent.py temporarily for this test
+4. Launch the simulation services:
     <ql-code-block language="bash">
     bash run_lab02.sh
     </ql-code-block>
-3. Open `http://localhost:5173` in your browser and click **Kick Off!**.
-4. Type a shout in the Coach Bar (e.g., "everyone attack").
-5. **Observe**: The Head Coach responds directly with a humorous touchline quote in the huddle log. Notice that no instructions are relayed to sub-agents, and no player attributes change on the pitch.
-6. When done testing, press `Ctrl+C` in your terminal to stop the services.
+5. Open `http://127.0.0.1:8000` in your browser and select **football_agents** in the app selector.
+6. Type a message in the message bar and send it (e.g., "everyone attack").
+7. **Observe**: The Head Coach responds directly with a humorous touchline quote in the huddle log. Notice that no instructions are relayed to sub-agents, and no player attributes change on the pitch.
+8. When done testing, press `Ctrl+C` in your terminal to stop the services. Restore the lines 64 and 65 that you had temporarily removed to perform this test.
 
 ---
 
