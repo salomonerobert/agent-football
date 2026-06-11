@@ -103,36 +103,36 @@ Before starting the implementation, you must set up your Python virtual environm
 ### Step 1 :  Clone the Git Repository & Activate Virtual Environment
 
 1. In Cloud Shell terminal, navigate to your workspace directory, and run the following command to clone the code:
-    ```bash
+    <ql-code-block language="bash">
     cd ~
     git clone https://github.com/salomonerobert/agent-football.git
-    ```
+    </ql-code-block>
 
 2. Change directory into the cloned repository:
-    ```bash
+    <ql-code-block language="bash">
     cd agent-football
-    ```
+    </ql-code-block>
 
 3. Create and activate a python virtual environment:
-    ```bash
+    <ql-code-block language="bash">
     python3 -m venv venv
     source venv/bin/activate
-    ```
+    </ql-code-block>
 4. Install dependencies to start your first lab
-    ```bash
+    <ql-code-block language="bash">
     pip install -r LAB01/requirements.txt
-    ```
+    </ql-code-block>
 
 5. Copy the environment template to create your `.env` configuration:
-    ```bash
+    <ql-code-block language="bash">
     cp .env.example .env
-    ```
+    </ql-code-block>
 
 6. Open the `.env` file and fill in the google cloud project id provisioned for you in this lab
-    ```ini
+    <ql-code-block language="plaintext">
     GOOGLE_GENAI_USE_VERTEXAI=true
     GOOGLE_CLOUD_PROJECT=your-google-cloud-project-id
-    ```
+    </ql-code-block>
 
 
 ### Step 2: Enable the Vertex AI API in Google Cloud
@@ -140,15 +140,15 @@ Before starting the implementation, you must set up your Python virtual environm
 To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex AI API for your project and establish credentials.
 
 1. Authenticate your Cloud Shell session:
-    ```bash
+    <ql-code-block language="bash">
     gcloud auth application-default login
-    ```
+    </ql-code-block>
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
 2. Run the following command to enable the Vertex AI service:
-    ```bash
+    <ql-code-block language="bash">
     gcloud services enable aiplatform.googleapis.com
-    ```
+    </ql-code-block>
 
 ---
 
@@ -174,9 +174,9 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 
 *   **Hint**: Use `genai.Client()` to initialize the Gemini client
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     client = genai.Client()
-    ```
+    </ql-code-block>
 
 ---
 
@@ -185,9 +185,9 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 *   **Objective**: Create a new asynchronous chat session using the image generation model (gemini-3.1-flash-image). Creating a chat session preserves the context and history of generated assets, which ensures the player and goalkeeper models align in jersey styling and color values.
 
 *   **Solution**:
-    ```python
+    <ql-code-block language="python">
     chat = client.aio.chats.create(model="publishers/google/models/gemini-3.1-flash-image")
-    ```
+    </ql-code-block>
 
 
 ---
@@ -233,13 +233,13 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
-    ```bash
+    <ql-code-block language="bash">
     cd LAB01
-    ```
+    </ql-code-block>
 2. Start the FastAPI development server:
-    ```bash
+    <ql-code-block language="bash">
     uvicorn app:app --host 127.0.0.1 --port 8002 --reload
-    ```
+    </ql-code-block>
 3. Open your browser and navigate to `http://127.0.0.1:8002`.
 4. Click **⚡ Generate Avatars** to trigger Gemini image generation. Watch the terminals to verify style consistency.
 5. Once your player spritesheets generate successfully, click **Configure Player Profiles ➡️**.
@@ -545,9 +545,9 @@ This bonus step connects the player agents to an external Model Context Protocol
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
 *   **ToDo to look for**: Locate the comment `# TODO: Task 5a - Import MCP Utilities`.
 *   **Code to fill in**:
-    ```python
+    <ql-code-block language="python">
     from .tools import make_condition_toolset, CONDITION_GUIDANCE
-    ```
+    </ql-code-block>
 
 #### Task 6b: Equip MCP Toolset & Prompt Guidance (Optional)
 *   **Files to edit**: `LAB02/football_agents/specialist_agents/defender.py` (and Midfielder/Forward/Goalkeeper).
@@ -567,9 +567,9 @@ This bonus step connects the player agents to an external Model Context Protocol
 *   **File to edit**: `LAB02/football_agents/specialist_agents/tools.py`
 *   **Code to change**:
     Locate the `USE_REAL_MCP_SERVER` flag and toggle it to `True` to instruct the toolset builder to spawn the real stdio-based FastMCP server subprocess:
-    ```python
+    <ql-code-block language="python">
     USE_REAL_MCP_SERVER = True
-    ```
+    </ql-code-block>
 *   **What this code does**: Activates the real Model Context Protocol (MCP) server so player agents can interact with the background FastMCP subprocess via JSON-RPC, enabling real-time injury and substitution reporting.
 
 ---
@@ -581,14 +581,14 @@ We are at the last leg of this lab. We will now try to launch and test the simul
 To launch the multi-agent simulation workspace:
 
 1.  Navigate to the `LAB02` directory. Make sure you are in the virtual environment we created earlier
-    ```bash
+    <ql-code-block language="bash">
     cd LAB02
     pip install -r football_agents/requirements.txt
-    ```
+    </ql-code-block>
 2.  Start the consolidated startup script:
-    ```bash
+    <ql-code-block language="bash">
     bash run_lab02.sh
-    ```
+    </ql-code-block>
     *(This script automatically cleans up local SQLite DB locks, swaps your task file templates, and spawns the Frontend Vite dev server on `http://localhost:5173`, the Captain Server on `8001`, and the Coach Server on `8000`).*
 3.  Open `http://localhost:5173` in your browser.
 4.  Click **Kick Off!** to start the match!
