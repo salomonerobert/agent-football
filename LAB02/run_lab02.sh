@@ -49,7 +49,8 @@ cleanup() {
 }
 
 # Trap SIGINT (Ctrl+C) and SIGTERM to clean up all spawned processes
-trap cleanup SIGINT SIGTERM
+trap cleanup EXIT SIGHUP SIGINT SIGTERM
+
 
 
 # Clean up any stale local ADK SQLite databases / session cache to prevent lock/corruption errors
@@ -63,7 +64,8 @@ echo "Starting LAB02 services in MODE: $MODE..."
 # 1. Start Captain Server
 echo "--> Starting Team Captain A2A Server..."
 python3 -m football_agents.captain_server &
-PIDS+=($!)
+CAPTAIN_PID=$!
+PIDS+=($CAPTAIN_PID)
 
 # Wait a brief moment for A2A port registration
 sleep 2
@@ -77,6 +79,25 @@ PIDS+=($!)
 
 # Wait a brief moment for Coach server port registration
 sleep 2
+
+# 2.5 Run sample test query on Captain Server if it is active
+if kill -0 "$CAPTAIN_PID" 2>/dev/null; then
+    echo "--> Sending test query 'all the best! stick to current plan' to Team Captain A2A Server..."
+    curl -s -X POST http://localhost:8001/ \
+      -H "Content-Type: application/json" \
+      -d '{
+        "jsonrpc": "2.0",
+        "method": "message/send",
+        "id": 1,
+        "params": {
+          "message": {
+            "message_id": "test-shout",
+            "role": "user",
+            "parts": [{"kind": "text", "text": "all the best! stick to current plan"}]
+          }
+        }
+      }' | python3 -m json.tool || echo "--> [WARNING] Test query to Captain Server failed."
+fi
 
 # 3. Start Frontend
 echo "--> Starting Frontend server (Vite)..."

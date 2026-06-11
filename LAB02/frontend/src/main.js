@@ -14,7 +14,7 @@
 
 import './style.css';
 import Phaser from 'phaser';
-import { SoccerGameScene } from './game';
+import { SoccerGameScene, GAME_DURATION_SEC, STATUS_CHECK_MS } from './game';
 import { Sound } from './audio';
 
 let gameInstance = null;
@@ -703,8 +703,8 @@ function getActiveScene() {
 // something to reason about so injuries/subs can emerge late in a match.
 function getFitnessReport() {
   const scene = getActiveScene();
-  const matchTime = scene ? scene.matchTime : 90;
-  const progress = Math.min(1, Math.max(0, (90 - matchTime) / 90));
+  const matchTime = scene ? scene.matchTime : GAME_DURATION_SEC;
+  const progress = Math.min(1, Math.max(0, (GAME_DURATION_SEC - matchTime) / GAME_DURATION_SEC));
 
   const notes = ROLES.map(role => {
     const wear = progress * (TIRE_RATE[role] || 1) + Math.random() * 0.15;
@@ -720,7 +720,7 @@ function getFitnessReport() {
 
 // Periodically ask the team to self-report condition (autonomous injuries/subs),
 // independent of coach shouts. Huddle bubbles are suppressed for these checks.
-const STATUS_CHECK_MS = 35000;
+// Periodic status check interval (imported from game.js)
 function runStatusCheck() {
   if (!getActiveScene()) return;
   sendInstructionToAgent(
