@@ -15,12 +15,15 @@
 import Phaser from 'phaser';
 import { Sound } from './audio';
 
+export const GAME_DURATION_SEC = 180;
+export const STATUS_CHECK_MS = 55000;
+
 export class SoccerGameScene extends Phaser.Scene {
   constructor() {
     super({ key: 'SoccerGameScene' });
     this.score1 = 0;
     this.score2 = 0;
-    this.matchTime = 90;
+    this.matchTime = GAME_DURATION_SEC;
     this.timerEvent = null;
     this.gameActive = false;
     this.isResetting = false;
@@ -71,6 +74,8 @@ export class SoccerGameScene extends Phaser.Scene {
       frameHeight: 768
     });
 
+    this.load.image('goalkeeper_blue', '/assets/sprites/goalkeeper_blue_team.png');
+    this.load.image('goalkeeper_red', '/assets/sprites/goalkeeper_red_team.png');
     this.load.image('goalkeeper', '/assets/sprites/goalkeeper.png');
   }
 
@@ -123,7 +128,7 @@ export class SoccerGameScene extends Phaser.Scene {
       // Body aligned to the visible figure
       p.body.setSize(150, 430);
       p.body.setOffset(101, 200);
-      
+
       // Initialize AI properties
       p.setData('team', 1);
       p.setData('idx', idx);
@@ -155,7 +160,7 @@ export class SoccerGameScene extends Phaser.Scene {
       p.setCollideWorldBounds(true);
       p.body.setSize(150, 430);
       p.body.setOffset(101, 200);
-      
+
       // Initialize AI properties
       p.setData('team', 2);
       p.setData('idx', idx);
@@ -184,23 +189,23 @@ export class SoccerGameScene extends Phaser.Scene {
     }
 
     // 6. AI Goalkeeper 1 (Left Goal)
-    this.gk1 = this.physics.add.sprite(180, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk1 = this.physics.add.sprite(180, 380, 'goalkeeper_blue', 'goalkeeper_blue_ready_0');
     this.gk1.setScale(0.22);
     this.gk1.setCollideWorldBounds(true);
     this.gk1.body.setImmovable(true);
-    this.gk1.play('gk_ready');
+    this.gk1.play('gk_blue_ready');
     this.gk1.body.setSize(120, 160);
     this.gk1.body.setOffset(40, 20);
     this.gk1.setData('team', 1);
     this.gk1.setData('role', 'goalkeeper');
 
     // 7. AI Goalkeeper 2 (Right Goal)
-    this.gk2 = this.physics.add.sprite(1228, 380, 'goalkeeper', 'goalkeeper_ready_0');
+    this.gk2 = this.physics.add.sprite(1228, 380, 'goalkeeper_red', 'goalkeeper_red_ready_0');
     this.gk2.setScale(0.22);
     this.gk2.setFlipX(true);
     this.gk2.setCollideWorldBounds(true);
     this.gk2.body.setImmovable(true);
-    this.gk2.play('gk_ready');
+    this.gk2.play('gk_red_ready');
     this.gk2.body.setSize(120, 160);
     this.gk2.body.setOffset(40, 20);
     this.gk2.setData('team', 2);
@@ -213,7 +218,7 @@ export class SoccerGameScene extends Phaser.Scene {
       forward: { speed: 260 },
       goalkeeper: { trackingSpeed: 0.09 }
     };
-    
+
     this.bluePlayers.forEach((p) => {
       const role = p.getData('role');
       const profile = defaults[role] || {};
@@ -373,7 +378,10 @@ export class SoccerGameScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Timer
-    this.timeText = this.add.text(width / 2, sbY + sbHeight / 2, '01:30', {
+    const initialMins = Math.floor(GAME_DURATION_SEC / 60);
+    const initialSecs = GAME_DURATION_SEC % 60;
+    const initialTimeStr = `${initialMins.toString().padStart(2, '0')}:${initialSecs.toString().padStart(2, '0')}`;
+    this.timeText = this.add.text(width / 2, sbY + sbHeight / 2, initialTimeStr, {
       fontFamily: '"Outfit", "Inter", Arial, sans-serif',
       fontSize: '22px',
       color: '#ffcc00',
@@ -411,8 +419,8 @@ export class SoccerGameScene extends Phaser.Scene {
         }
       };
       if (!this.blueProfiles) {
-        this.blueProfiles = window.currentProfiles 
-          ? JSON.parse(JSON.stringify(window.currentProfiles)) 
+        this.blueProfiles = window.currentProfiles
+          ? JSON.parse(JSON.stringify(window.currentProfiles))
           : JSON.parse(JSON.stringify(hardcodedDefaults));
       }
       if (!this.redProfiles) {
@@ -695,7 +703,7 @@ export class SoccerGameScene extends Phaser.Scene {
         }
 
         // Default spawn point coordinates
-        const spawns = isBlue 
+        const spawns = isBlue
           ? [{ x: 450, y: 380 }, { x: 320, y: 250 }, { x: 320, y: 510 }, { x: 560, y: 380 }]
           : [{ x: 958, y: 380 }, { x: 1088, y: 250 }, { x: 1088, y: 510 }, { x: 848, y: 380 }];
         const defaultX = spawns[p.getData('idx')].x;
@@ -724,7 +732,7 @@ export class SoccerGameScene extends Phaser.Scene {
           // Decision check after delay
           if (time - p.getData('possessionStart') >= (profile.decisionDelay || 100)) {
             const distToGoal = Math.abs(opponentGoalLine - p.x);
-            
+
             const teammates = isBlue ? this.bluePlayers : this.redPlayers;
             const opponents = isBlue ? this.redPlayers : this.bluePlayers;
 
@@ -742,7 +750,7 @@ export class SoccerGameScene extends Phaser.Scene {
             let adjustedDribbleTend = dribbleTend;
             if (isPressed) adjustedDribbleTend *= 0.35;
             if (isInOwnHalf) adjustedDribbleTend *= 0.45;
-            
+
             const preferDribble = Math.random() < adjustedDribbleTend;
 
             // 1. Shoot check
@@ -752,8 +760,8 @@ export class SoccerGameScene extends Phaser.Scene {
                   // Find opposing goalkeeper
                   const oppGk = isBlue ? this.gk2 : this.gk1;
                   // Aim at the corner furthest from the keeper
-                  const shotY = oppGk.y < 380 
-                    ? 460 + Math.random() * 25 
+                  const shotY = oppGk.y < 380
+                    ? 460 + Math.random() * 25
                     : 300 - Math.random() * 25;
 
                   p.setData('kickPending', true);
@@ -805,7 +813,7 @@ export class SoccerGameScene extends Phaser.Scene {
         const teamHasPossession = this.possessor && this.possessor.getData('team') === teamNum;
         if (teamHasPossession) {
           let attackWeight = profile.attackPositioning || 0.5;
-          
+
           // Support run frequency
           const supportFreq = profile.supportRunFrequency !== undefined ? profile.supportRunFrequency : 0.5;
           if (Math.random() < supportFreq * 0.25) {
@@ -813,7 +821,7 @@ export class SoccerGameScene extends Phaser.Scene {
           }
 
           const targetX = defaultX + (ballX - defaultX) * attackWeight + (role === 'forward' ? 140 * directionFactor : 0);
-          
+
           // Width Preference Y target
           const widthPref = profile.widthPreference !== undefined ? profile.widthPreference : 0.5;
           let targetY = defaultY + (ballY - defaultY) * 0.4;
@@ -838,11 +846,11 @@ export class SoccerGameScene extends Phaser.Scene {
         const isClosestToBall = closestPlayer === p;
         const opponentHasBall = this.possessor && this.possessor.getData('team') !== teamNum;
         const distToBall = Phaser.Math.Distance.Between(p.x, p.y, ballX, ballY);
-        
+
         // Pressing Intensity and Aggression
         const pressing = profile.pressingIntensity !== undefined ? profile.pressingIntensity : 0.5;
         const pressDistance = 80 + pressing * 120;
-        
+
         const isMidOrForward = role === 'midfielder' || role === 'forward';
         const shouldChase = isClosestToBall || (isMidOrForward && opponentHasBall && distToBall < pressDistance && Math.random() < ((profile.aggression || 0.5) * 0.7 + pressing * 0.3));
 
@@ -862,7 +870,7 @@ export class SoccerGameScene extends Phaser.Scene {
           // Position defensively
           const defenseWeight = profile.defensePositioning || 0.6;
           const targetX = defaultX + (ballX - defaultX) * (1 - defenseWeight);
-          
+
           // Width Preference
           const widthPref = profile.widthPreference !== undefined ? profile.widthPreference : 0.5;
           let targetY = defaultY + (ballY - defaultY) * 0.3;
@@ -903,10 +911,10 @@ export class SoccerGameScene extends Phaser.Scene {
       const dy = y2 - y1;
       const lenSq = dx * dx + dy * dy;
       if (lenSq === 0) return Math.hypot(x0 - x1, y0 - y1);
-      
+
       let t = ((x0 - x1) * dx + (y0 - y1) * dy) / lenSq;
       t = Math.max(0, Math.min(1, t));
-      
+
       const projX = x1 + t * dx;
       const projY = y1 + t * dy;
       return Math.hypot(x0 - projX, y0 - projY);
@@ -937,7 +945,7 @@ export class SoccerGameScene extends Phaser.Scene {
     const teamNum = player.getData('team');
     const role = player.getData('role');
     const profiles = teamNum === 1 ? this.blueProfiles : this.redProfiles;
-    const profile = profiles ? profiles[role] : {};
+    const profile = profiles ? (profiles[role] || {}) : {};
     const passRiskTolerance = profile.passRiskTolerance !== undefined ? profile.passRiskTolerance : 0.5;
 
     teammates.forEach(mate => {
@@ -1005,12 +1013,12 @@ export class SoccerGameScene extends Phaser.Scene {
 
     tState.active = true;
     tState.endAt = time + 320;
-    
+
     if (this.possessor === player) {
       this.possessor = null;
       this.captureReadyAt = time + 200;
     }
-    
+
     player.setData('kickPending', false);
     Sound.playJump();
   }
@@ -1045,7 +1053,7 @@ export class SoccerGameScene extends Phaser.Scene {
           // Foul Probability Check
           const role = sprite.getData('role');
           const profiles = teamNum === 1 ? this.blueProfiles : this.redProfiles;
-          const profile = profiles ? profiles[role] : {};
+          const profile = profiles ? (profiles[role] || {}) : {};
           const foulProb = profile.foulProbability !== undefined ? profile.foulProbability : 0.2;
           if (Math.random() < foulProb * 0.15) {
             Sound.playWhistle();
@@ -1061,7 +1069,7 @@ export class SoccerGameScene extends Phaser.Scene {
         tState.active = false;
         const role = sprite.getData('role');
         const profiles = teamNum === 1 ? this.blueProfiles : this.redProfiles;
-        const profile = profiles ? profiles[role] : {};
+        const profile = profiles ? (profiles[role] || {}) : {};
         const cooldown = profile.tackleCooldown !== undefined ? profile.tackleCooldown : 1000;
         const recMult = profile.recoverySpeedMultiplier !== undefined ? profile.recoverySpeedMultiplier : 1.0;
         tState.cooldownUntil = time + (cooldown / recMult);
@@ -1175,7 +1183,7 @@ export class SoccerGameScene extends Phaser.Scene {
   updateGkAI(gk, teamNum, profile, time, delta) {
     const ballX = this.ball.x;
     const ballY = this.ball.y;
-    
+
     const isBlue = teamNum === 1;
     const defaultX = isBlue ? 180 : 1228;
     const defendingArea = isBlue ? ballX < 450 : ballX > 958;
@@ -1184,7 +1192,7 @@ export class SoccerGameScene extends Phaser.Scene {
     const attackPos = (profile && profile.attackPositioning !== undefined) ? profile.attackPositioning : 0.0;
     const maxSweepDistance = 180;
     let targetX = defaultX;
-    
+
     if (isBlue) {
       if (ballX > 350) {
         const ballFactor = Phaser.Math.Clamp((ballX - 350) / 700, 0, 1);
@@ -1201,19 +1209,31 @@ export class SoccerGameScene extends Phaser.Scene {
     const trackingSpeed = (profile && profile.trackingSpeed !== undefined) ? profile.trackingSpeed : 0.08;
     gk.x += (targetX - gk.x) * trackingSpeed;
 
+    const isDiving = gk.anims.isPlaying && gk.anims.currentAnim && gk.anims.currentAnim.key.includes('dive');
+
     if (defendingArea) {
       const targetY = Phaser.Math.Clamp(ballY, 280, 480);
       gk.y += (targetY - gk.y) * trackingSpeed;
 
       const triggerDistance = isBlue ? 280 : 1128;
       const isClose = isBlue ? ballX < triggerDistance : ballX > triggerDistance;
-      if (isClose && Math.abs(ballY - gk.y) > 35 && !gk.anims.isPlaying && Math.random() < (profile.diveChance || 0.1)) {
+      if (isClose && Math.abs(ballY - gk.y) > 35 && !isDiving && Math.random() < (profile.diveChance || 0.1)) {
         const isDivingUp = ballY < gk.y;
-        gk.play(isDivingUp ? (isBlue ? 'gk_dive_left' : 'gk_dive_right') : (isBlue ? 'gk_dive_right' : 'gk_dive_left'));
+        const diveLeftAnim = isBlue ? 'gk_blue_dive_left' : 'gk_red_dive_left';
+        const diveRightAnim = isBlue ? 'gk_blue_dive_right' : 'gk_red_dive_right';
+        gk.play(isDivingUp ? (isBlue ? diveLeftAnim : diveRightAnim) : (isBlue ? diveRightAnim : diveLeftAnim));
         Sound.playJump();
       }
     } else {
       gk.y += (380 - gk.y) * 0.05;
+    }
+
+    // Reset to ready animation if not diving and ready is not already playing
+    if (!isDiving) {
+      const readyAnim = isBlue ? 'gk_blue_ready' : 'gk_red_ready';
+      if (!gk.anims.currentAnim || gk.anims.currentAnim.key !== readyAnim) {
+        gk.play(readyAnim);
+      }
     }
   }
 
@@ -1473,7 +1493,7 @@ export class SoccerGameScene extends Phaser.Scene {
       delay: 1000,
       callback: () => {
         this.matchTime--;
-        
+
         const mins = Math.floor(this.matchTime / 60);
         const secs = this.matchTime % 60;
         this.timeText.setText(`${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
@@ -1521,10 +1541,13 @@ export class SoccerGameScene extends Phaser.Scene {
   restartMatch() {
     this.score1 = 0;
     this.score2 = 0;
-    this.matchTime = 90;
+    this.matchTime = GAME_DURATION_SEC;
     this.scoreText1.setText('0');
     this.scoreText2.setText('0');
-    this.timeText.setText('01:30');
+    const initialMins = Math.floor(GAME_DURATION_SEC / 60);
+    const initialSecs = GAME_DURATION_SEC % 60;
+    const initialTimeStr = `${initialMins.toString().padStart(2, '0')}:${initialSecs.toString().padStart(2, '0')}`;
+    this.timeText.setText(initialTimeStr);
     this.isResetting = false;
 
     this.ball.body.setEnable(true);
@@ -1692,9 +1715,16 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 941, w: 206 },
       { x: 1168, w: 205 }
     ];
-    
-    readyCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_ready_${idx}`, 0, coord.x, 49, coord.w, 198);
+
+    const keys = [];
+    if (this.textures.exists('goalkeeper_blue')) keys.push('goalkeeper_blue');
+    if (this.textures.exists('goalkeeper_red')) keys.push('goalkeeper_red');
+    if (this.textures.exists('goalkeeper')) keys.push('goalkeeper');
+
+    keys.forEach(key => {
+      readyCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_ready_${idx}`, 0, coord.x, 49, coord.w, 198);
+      });
     });
 
     const diveLeftCoords = [
@@ -1704,8 +1734,10 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 856, w: 252 },
       { x: 1119, w: 254 }
     ];
-    diveLeftCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_dive_left_${idx}`, 0, coord.x, 307, coord.w, 180);
+    keys.forEach(key => {
+      diveLeftCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_dive_left_${idx}`, 0, coord.x, 307, coord.w, 180);
+      });
     });
 
     const diveRightCoords = [
@@ -1715,49 +1747,137 @@ export class SoccerGameScene extends Phaser.Scene {
       { x: 850, w: 253 },
       { x: 1119, w: 254 }
     ];
-    diveRightCoords.forEach((coord, idx) => {
-      this.textures.get('goalkeeper').add(`goalkeeper_dive_right_${idx}`, 0, coord.x, 556, coord.w, 177);
+    keys.forEach(key => {
+      diveRightCoords.forEach((coord, idx) => {
+        this.textures.get(key).add(`${key}_dive_right_${idx}`, 0, coord.x, 556, coord.w, 177);
+      });
     });
 
-    this.anims.create({
-      key: 'gk_ready',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_4' },
-        { key: 'goalkeeper', frame: 'goalkeeper_ready_5' }
-      ],
-      frameRate: 6,
-      repeat: -1
-    });
+    if (this.textures.exists('goalkeeper_blue')) {
+      this.anims.create({
+        key: 'gk_blue_ready',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_4' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
 
-    this.anims.create({
-      key: 'gk_dive_left',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_left_4' }
-      ],
-      frameRate: 8,
-      repeat: 0
-    });
+      this.anims.create({
+        key: 'gk_blue_dive_left',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
 
-    this.anims.create({
-      key: 'gk_dive_right',
-      frames: [
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_0' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_1' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_2' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_3' },
-        { key: 'goalkeeper', frame: 'goalkeeper_dive_right_4' }
-      ],
-      frameRate: 8,
-      repeat: 0
-    });
+      this.anims.create({
+        key: 'gk_blue_dive_right',
+        frames: [
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_0' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_1' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_2' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_3' },
+          { key: 'goalkeeper_blue', frame: 'goalkeeper_blue_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
+
+    if (this.textures.exists('goalkeeper_red')) {
+      this.anims.create({
+        key: 'gk_red_ready',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_4' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'gk_red_dive_left',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+
+      this.anims.create({
+        key: 'gk_red_dive_right',
+        frames: [
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_0' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_1' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_2' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_3' },
+          { key: 'goalkeeper_red', frame: 'goalkeeper_red_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
+
+    if (this.textures.exists('goalkeeper')) {
+      this.anims.create({
+        key: 'gk_ready',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_4' },
+          { key: 'goalkeeper', frame: 'goalkeeper_ready_5' }
+        ],
+        frameRate: 6,
+        repeat: -1
+      });
+
+      this.anims.create({
+        key: 'gk_dive_left',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_left_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+
+      this.anims.create({
+        key: 'gk_dive_right',
+        frames: [
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_0' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_1' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_2' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_3' },
+          { key: 'goalkeeper', frame: 'goalkeeper_dive_right_4' }
+        ],
+        frameRate: 8,
+        repeat: 0
+      });
+    }
   }
 
 
@@ -1786,7 +1906,7 @@ export class SoccerGameScene extends Phaser.Scene {
   }
 
   // Draw both goals - now empty as they are baked directly into the background pitch image.
-  drawGoals() {}
+  drawGoals() { }
 
   // --- Coach commands (invoked from the DOM shout bar in main.js) ---
   coachShoot(teamNum) {

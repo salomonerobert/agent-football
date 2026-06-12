@@ -118,6 +118,7 @@ Before starting the implementation, you must set up your Python virtual environm
     python3 -m venv venv
     source venv/bin/activate
     </ql-code-block>
+
 4. Install dependencies to start your first lab
     <ql-code-block language="bash">
     pip install -r LAB01/requirements.txt
@@ -139,16 +140,30 @@ Before starting the implementation, you must set up your Python virtual environm
 
 To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex AI API for your project and establish credentials.
 
-1. Authenticate your Cloud Shell session:
+1. Authenticate your Cloud Shell CLI session:
     <ql-code-block language="bash">
-    gcloud auth application-default login
+    gcloud auth login
     </ql-code-block>
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
-2. Run the following command to enable the Vertex AI service:
+2. Authenticate application default credentials:
+    <ql-code-block language="bash">
+    gcloud auth application-default login
+    </ql-code-block>
+
+    *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
+
+3. Set config project to your project ID:
+    <ql-code-block language="bash">
+    gcloud config set project <project-id>
+    </ql-code-block>
+
+4. Run the following command to enable the Vertex AI service:
     <ql-code-block language="bash">
     gcloud services enable aiplatform.googleapis.com
     </ql-code-block>
+
+> 💡 **Tip / Troubleshooting**: If you experience UI sync issues or if instructions aren't taking effect, always remember to perform a **hard refresh** (`CMD + Shift + R` on Mac, `Ctrl + F5` on Windows/Linux) on the lab page to load the latest interface and clear cached scripts.
 
 ---
 
@@ -234,13 +249,16 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
-    ```bash
+    <ql-code-block language="bash">
+    <ql-code-block language="bash">
     cd LAB01
     </ql-code-block>
+
 2. Start the FastAPI development server:
     <ql-code-block language="bash">
     uvicorn app:app --host 127.0.0.1 --port 8002 --reload
     </ql-code-block>
+
 3. Open your browser and navigate to `http://127.0.0.1:8002`.
 4. Click **⚡ Generate Avatars** to trigger Gemini image generation. Watch the terminals to verify style consistency.
 5. Once your player spritesheets generate successfully, click **Configure Player Profiles ➡️**.
@@ -249,10 +267,12 @@ Before proceeding to the checkpoint questions, launch the local onboarding serve
 ---
 ## Verification
 
-In order to verify the artifacts you have generated for your play, check the following paths in your workspace
+In order to verify the artifacts you have generated for your play, check the following paths in your workspace:
 
-1. LAB02/public/player_state/player_name.json files :  These files should reflect the configured player persona.
-2. LAB02/public/assets/sprites/player_<team_color>.png and LAB02/public/assets/sprites/golakeeper_<team_color>.png should reflect the avatars you created.
+1. `LAB02/frontend/public/player_state/*.json` files: These files should reflect the configured tactical player attributes.
+2. `LAB02/frontend/public/assets/sprites/player_<team_color>.png` and `LAB02/frontend/public/assets/sprites/goalkeeper_<team_color>.png` should reflect the multimodal avatars you created.
+
+> ℹ️ **Goalkeeper Sprite Dimensions & Scaling**: You might notice that in the game client, outfield players and goalkeepers are scaled differently (`0.07` vs `0.22`). This is intentional and perfectly normal! Because the Goalkeeper spritesheet contains 16 frames packed into 3 rows whereas the Outfield Player spritesheet contains only 4 frames in a single row, the individual goalkeeper sprite frames are smaller in pixel resolution. The game engine automatically compensates for this differential scaling so character sizes remain perfectly consistent on the pitch. You do not need to generate goalkeeper sprites in a larger size.
 
 ---
 
@@ -311,8 +331,31 @@ In `LAB02`, we will start with a monolithic Coach setup and refactor it into a d
     ... existing instructions...
     
     TACTICAL SHOUTS:
-    For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging 1-sentence shout! Do NOT call any sub-agents yet."""
+    For any other message (e.g. "everyone attack"), respond directly as a passionate coach with a funny, encouraging one sentence shout! Do NOT call any subagents yet."""
     </ql-code-block>
+
+### 🏃 Interim Test: Execute Monolithic Coach
+
+Before refactoring into a distributed multi-agent hierarchy, let's run the simulation now to observe how a monolithic agent behaves. This will give you a visual baseline to compare against later when we implement relayed multi-agent responses.
+
+1. In your terminal, navigate to `LAB02`:
+    <ql-code-block language="bash">
+    cd LAB02
+    </ql-code-block>
+2. Install additional dependencies:
+    <ql-code-block language="bash">
+    pip install -r football_agents/requirements.txt
+    </ql-code-block>
+3. Remove redundant instructions to coach temporarily:
+    Remove lines 64 and 65 of agent.py temporarily for this test
+4. Launch the simulation services:
+    <ql-code-block language="bash">
+    bash run_lab02.sh
+    </ql-code-block>
+5. Open `http://127.0.0.1:8000` in your browser and select **football_agents** in the app selector.
+6. Type a message in the message bar and send it (e.g., "everyone attack").
+7. **Observe**: The Head Coach responds directly with a humorous touchline quote in the huddle log. Notice that no instructions are relayed to sub-agents, and no player attributes change on the pitch.
+8. When done testing, press `Ctrl+C` in your terminal to stop the services. Restore the lines 64 and 65 that you had temporarily removed to perform this test.
 
 ---
 
@@ -324,10 +367,10 @@ After monolith coach, lets create our first A2A server for the captain agent. In
 *   Under file `LAB02/football_agents/captain.py` locate and review the comment `# TODO: Task 2a`
 *   **Objective** : You are required to define the captain agent who would be responsible of relaying coach instructions to the players. But since its just the beginning, lets keep it simple. Lets create a standalone agent that responds to coach instructions with a simple players-style greeting.
 *   **Hint** : 
-    1. Initialize `captain_agent` as an LlmAgent.
-    2. Set name="TeamCaptain" 
-    3. Set model=GeminiConstants.GEMINI_FLASH_LITE.
-    4. Write a simple starting instruction (e.g. "You are the captain. Respond to shouts with a player-style greeting.").
+    - Initialize `captain_agent` as an LlmAgent.
+    - Set name="TeamCaptain" 
+    - Set model=GeminiConstants.GEMINI_FLASH_LITE.
+    - Write a simple starting instruction (e.g. "You are the captain. Respond to shouts with a player-style greeting.").
 
 *   **Solution**:
     <ql-code-block language="python">
@@ -335,7 +378,7 @@ After monolith coach, lets create our first A2A server for the captain agent. In
         name="TeamCaptain",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="The team captain who relays coach shouts to the outfield players.",
-        instruction="""You are the team captain. Respond to the Coach's instruction with a simple players-style greeting (e.g. 'Captain here, ready to lead!'). Leave tools empty for now."""
+        instruction="""You are the team captain. Respond to the Coach's instruction with a simple players style greeting (e.g. 'Captain here, ready to lead!')."""
     )
     </ql-code-block>
 
@@ -384,9 +427,9 @@ For this, we will configure the Coach agent to stop responding directly and inst
 *   **Objective** : Define the remote captain agent in the coach agent.
 
 *   **Hint** : 
-    1. Create a RemoteA2aAgent
-    2. Set the name to "team_captain", description to "The team captain, reachable over the A2A protocol.", and agent_card to the `CAPTAIN_A2A_URL`
-    3. `CAPTAIN_A2A_URL` is defined as `http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}`
+    - Create a RemoteA2aAgent
+    - Set the name to "team_captain", description to "The team captain, reachable over the A2A protocol.", and agent_card to the `CAPTAIN_A2A_URL`
+    - `CAPTAIN_A2A_URL` is defined as `http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}`
 
 *   **Solution**:
     <ql-code-block language="python">
@@ -400,13 +443,14 @@ For this, we will configure the Coach agent to stop responding directly and inst
         agent_card=CAPTAIN_A2A_URL,
     )
     </ql-code-block>
+
 Now that the coach can "reach" captain; lets modify our coach instruction to delegate the tactical shouts to the captain instead of responding directly.
 
 #### TASK 3b: Update Coach Prompt to now start relaying instructions to the Captain
 *   Under `LAB02/football_agents/agent.py` locate and review `# TODO: Task 3b`
 *   **Objective** : 
-    1. Update the Coach Agent instructions to delegate instructions to the Captain over the network. Don't remove the code to backup and restore profiles, it should still work as is.
-    2. Add the captain to the `sub_agents` list.
+    - Update the Coach Agent instructions to delegate instructions to the Captain over the network. Don't remove the code to backup and restore profiles, it should still work as is.
+    - Add the captain to the `sub_agents` list.
 
 *   **Solution**:
     <ql-code-block language="python">
@@ -422,12 +466,14 @@ Now that the coach can "reach" captain; lets modify our coach instruction to del
         
         TACTICAL SHOUTS:
         When you receive a tactical shout from the user, you MUST immediately transfer control
-        to your `team_captain` sub-agent. Do NOT attempt to answer the shout yourself!""",
+        to your `team_captain` subagent. Do NOT attempt to answer the shout yourself!""",
         
         tools=[backup_baseline_profiles, restore_baseline_profiles],
         sub_agents=[team_captain_remote],
     )
+
     </ql-code-block>
+
 ---
 
 ## TASK 4: Define Specialist Player Agents 
@@ -453,33 +499,34 @@ We have Coach and Captain ready and talking to each other, but they are not yet 
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="Handles tactical instructions and attribute updates for the DEFENDER role.",
-        instruction="""You are a gritty, no-nonsense Defender on the football pitch.
+        instruction="""You are a gritty, no nonsense Defender on the football pitch.
         The team captain is relaying an instruction to you. If the instruction is general (e.g., 'everyone attack', 'play aggressively') or specifically for defenders, use the update_profile tool to update the defender role attributes.
         If the instruction is explicitly ONLY for another role (e.g., 'forwards only, shoot more'), do NOT use the tool.
 
         IMPORTANT: You must affect ALL attributes that logically align with the command, rather than just modifying one or two.
         Here are the ONLY attributes that affect gameplay. Write values in the ranges noted; do NOT invent other keys.
-        - speed (0.0-1.0 multiplier on base pace)
-        - aggression (0.0-1.0; chance to join the press when the opponent has the ball)
-        - .... <all other attributes available in defender.json>
+        * speed (0.0 to 1.0 multiplier on base pace)
+        * aggression (0.0 to 1.0; chance to join the press when the opponent has the ball)
+        * .... <all other attributes available in defender.json>
 
 
         CRITICAL INSTRUCTION:
         Step 1. Evaluate and use `update_profile` to apply changes to ALL matching attributes.
-        Step 2. Output a final text response that is STRICTLY 3-5 words long. It must be a quirky, football player-style affirmative.
+        Step 2. Output a final text response that is STRICTLY 3 to 5 words long. It must be a quirky, football player style affirmative.
 
         Examples for Step 2:
-        - If asked to attack/go forward: "Going up, boss!"
-        - If asked to defend/fall back: "Parking the bus!"
-        - If the instruction is for someone else: "Holding the line!"
+        * If asked to attack/go forward: "Going up, boss!"
+        * If asked to defend/fall back: "Parking the bus!"
+        * If the instruction is for someone else: "Holding the line!"
 
-        You MUST provide the verbal response and it MUST be 3-5 words!""",
+        You MUST provide the verbal response and it MUST be 3 to 5 words!""",
 
         tools=[update_profile],
         output_key="defender_response"
     )
+
     </ql-code-block>
-    
+
 ---
 
 ## TASK 5: Orchestrate Captain and Specialist Agents
@@ -490,9 +537,9 @@ Now that all player agents have been defined and are ready to go, next step is t
 #### TASK 5a, 5b: Register Specialist Agents and Orchestrate Captain
 *   Under the file `LAB02/football_agents/captain.py` locate and review comment `# TODO: Task 5a` and `# TODO: Task 5b`
 *   **Objective**:
-    1. Import the specialist agents: `defender_agent`, `midfielder_agent`, `forward_agent`, and `goalkeeper_agent`.
-    2. Equip the captain agent with these specialists as tools (`AgentTool`).
-    3. Write a system instruction prompt that instructs the captain to delegate coach shouts to the appropriate specialist agents and compile their verbal responses into a strict JSON payload.
+    - Import the specialist agents: `defender_agent`, `midfielder_agent`, `forward_agent`, and `goalkeeper_agent`.
+    - Equip the captain agent with these specialists as tools (`AgentTool`).
+    - Write a system instruction prompt that instructs the captain to delegate coach shouts to the appropriate specialist agents and compile their verbal responses into a strict JSON payload.
 
 *   **Solution**:
 
@@ -509,7 +556,7 @@ Now that all player agents have been defined and are ready to go, next step is t
         name="TeamCaptain",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         description="Team captain who relays the coach's tactics to the individual players and reports back the huddle.",
-        instruction="""You are the on-pitch TEAM CAPTAIN. The head coach has shouted an instruction to you
+        instruction="""You are the on pitch TEAM CAPTAIN. The head coach has shouted an instruction to you
         (and may have attached a short fitness/tiredness report for some players).
 
         Your job is to relay tactics DOWN to your teammates. You have one tool per player:
@@ -524,7 +571,7 @@ Now that all player agents have been defined and are ready to go, next step is t
         {
         "status": "Short confirmation that tactics were executed",
             "huddle": {
-                "defender": "The defender's exact quote (or a brief stand-in if not addressed)",
+                "defender": "The defender's exact quote (or a brief stand in if not addressed)",
                 "midfielder": "The midfielder's exact quote",
                 "forward": "The forward's exact quote",
                 "goalkeeper": "The goalkeeper's exact quote"
@@ -539,7 +586,9 @@ Now that all player agents have been defined and are ready to go, next step is t
             AgentTool(goalkeeper_agent)
         ]
     )
+    
     </ql-code-block>
+
 ---
 
 ## TASK 6: Autonomous Condition Reporting (FastMCP Integration) (Optional)
@@ -562,11 +611,13 @@ This bonus step connects the player agents to an external Model Context Protocol
         name="DefenderSpecialist",
         model=GeminiConstants.GEMINI_FLASH_LITE,
         instruction="""Your prompt instructions...""" + CONDITION_GUIDANCE,
-        tools=[update_profile, make_condition_toolset()],
+        tools=[update_profile, *make_condition_toolset()],
         output_key="defender_response"
     )
     </ql-code-block>
+
 *   **What this code does**: Appends the MCP reporting guidelines to your player's instructions and equips the agent's toolbelt with `make_condition_toolset()`. This establishes a stdio-based JSON-RPC connection to the FastMCP server when running checkups.
+*   **⚠️ Important Syntax Note**: Since `make_condition_toolset()` returns a **list** of tools, putting it directly inside the tools list (e.g. `[update_profile, make_condition_toolset()]`) will cause a nested list error in Python. You MUST unpack the list using the `*` operator as shown above: `tools=[update_profile, *make_condition_toolset()]`.
 #### Task 6c: Enable the Real MCP Server (Optional)
 *   **File to edit**: `LAB02/football_agents/specialist_agents/tools.py`
 *   **Code to change**:
@@ -574,6 +625,7 @@ This bonus step connects the player agents to an external Model Context Protocol
     <ql-code-block language="python">
     USE_REAL_MCP_SERVER = True
     </ql-code-block>
+
 *   **What this code does**: Activates the real Model Context Protocol (MCP) server so player agents can interact with the background FastMCP subprocess via JSON-RPC, enabling real-time injury and substitution reporting.
 
 ---
@@ -589,14 +641,18 @@ To launch the multi-agent simulation workspace:
     cd LAB02
     pip install -r football_agents/requirements.txt
     </ql-code-block>
+
 2.  Start the consolidated startup script:
     <ql-code-block language="bash">
     bash run_lab02.sh
     </ql-code-block>
+
     *(This script automatically cleans up local SQLite DB locks, swaps your task file templates, and spawns the Frontend Vite dev server on `http://localhost:5173`, the Captain Server on `8001`, and the Coach Server on `8000`).*
 3.  Open `http://localhost:5173` in your browser.
 4.  Click **Kick Off!** to start the match!
 5.  Type screams in the shout bar (e.g., "everyone attack", "play defensive") and observe the huddle bubble reactions and attributes shifting in real-time
+
+> 🔍 **Debugging & Troubleshooting**: The huddle log panel in the web UI is designed for high-level visibility to show that agent layers are active. If you have coding syntax typos (e.g. misspelled attributes, missing brackets, list nesting errors), the UI may freeze or fail silently. **Always check your terminal output** where you ran `run_lab02.sh` or your python servers—it contains the full, granular error traceback from python to help you identify typos instantly.
 
 ---
 

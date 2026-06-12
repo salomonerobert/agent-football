@@ -13,14 +13,14 @@
 # limitations under the License.
 
 # =====================================================================
-# Task 4 & 5: Forward Specialist Agent (ForwardSpecialist) - TEMPLATE
+# Task 4 & 6: Forward Specialist Agent (ForwardSpecialist) - TEMPLATE
 # =====================================================================
 
 from google.adk.agents.llm_agent import LlmAgent
 from football_agents.constants import GeminiConstants
 from .tools import update_profile
 
-# TODO: Task 5a - Import MCP Utilities (Uncomment in Task 5)
+# TODO: Task 6a - Import MCP Utilities (Uncomment in Task 6)
 # from .tools import make_condition_toolset, CONDITION_GUIDANCE
 
 
@@ -49,7 +49,7 @@ from .tools import update_profile
 forward_agent = None  # 👈 REPLACE THIS WITH YOUR LlmAgent INITIALIZATION IN TASK 4
 
 
-# TODO: Task 5b - Equip MCP Toolset & Prompt Guidance (in Task 5)
-# - Add `make_condition_toolset()` to the tools list.
+# TODO: Task 6b - Equip MCP Toolset & Prompt Guidance (in Task 6)
+# - Add `*make_condition_toolset()` to the tools list (use `*` for list unpacking).
 # - Append `+ CONDITION_GUIDANCE` to the end of your instruction prompt.
 

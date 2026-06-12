@@ -23,7 +23,7 @@ load_dotenv()
 # Hint:
 # from google.adk.a2a.utils.agent_to_a2a import to_a2a
 # import uvicorn
-# from football_agents.task_captain import captain_agent
+# from football_agents.captain import captain_agent
 
 
 # TODO: Task 2c - Build the A2A Starlette app and run the server
