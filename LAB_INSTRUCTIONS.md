@@ -98,6 +98,10 @@ To build this real-time agentic game, you will work with the following technolog
 
 Before starting the implementation, you must set up your Python virtual environment and Google Cloud permissions.
 
+![[/fragments/startqwiklab]]
+
+![[/fragments/gcpconsole]]
+
 ![[/fragments/cloudshelleditortab]]
 
 ### Step 1 :  Clone the Git Repository & Activate Virtual Environment
@@ -154,9 +158,11 @@ To generate avatars using Google Cloud's Vertex AI, you must enable the Vertex A
     *(Follow the prompts to click the link and authenticate with your Qwiklabs Google Account.)*
 
 3. Set config project to your project ID:
-    <ql-code-block language="bash">
-    gcloud config set project <project-id>
-    </ql-code-block>
+
+    <ql-code-block bash templated noWrap>
+    gcloud config set project {{{project_0.project_id|ProjectID}}}
+    </ql-code-block 
+    
 
 4. Run the following command to enable the Vertex AI service:
     <ql-code-block language="bash">
@@ -249,7 +255,6 @@ In Gemini, we achieve this by starting a **Chat Session** (a single continuous c
 Before proceeding to the checkpoint questions, launch the local onboarding server to test your spritesheet generator and prompt configurations:
 
 1. In your terminal, make sure your virtual environment is active, then navigate to the `LAB01` directory:
-    <ql-code-block language="bash">
     <ql-code-block language="bash">
     cd LAB01
     </ql-code-block>
