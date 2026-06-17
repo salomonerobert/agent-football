@@ -19,12 +19,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # TODO: Task 2b - Import ADK A2A and Uvicorn utilities
-
-# Hint:
+# Uncomment the imports below for Task 2b:
 # from google.adk.a2a.utils.agent_to_a2a import to_a2a
 # import uvicorn
 # from football_agents.captain import captain_agent
 
+HOST = os.environ.get("CAPTAIN_HOST", "localhost")
+PORT = int(os.environ.get("CAPTAIN_PORT", "8001"))
 
 # TODO: Task 2c - Build the A2A Starlette app and run the server
-# Your code here:
+# Uncomment the block below when you are ready to serve the Captain Agent:
+#
+# app = to_a2a(captain_agent, host=HOST, port=PORT)
+#
+# if __name__ == "__main__":
+#     print(f"Serving Team Captain over A2A at http://{HOST}:{PORT}")
+#     print(f"Agent card: http://{HOST}:{PORT}/.well-known/agent-card.json")
+#     uvicorn.run(app, host=HOST, port=PORT)

@@ -219,7 +219,7 @@ def update_profile(role: str, changes: dict) -> str:
 
 
 # TODO: Task 6c - Enable the Real MCP Server (Optional)
-# Locate the USE_REAL_MCP_SERVER flag and toggle it to True
+# Change the flag below from False to True to enable the real FastMCP server subprocess:
 USE_REAL_MCP_SERVER = False
 
 def dummy_report_injury(role: str, severity: str = "knock") -> str:

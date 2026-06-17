@@ -33,13 +33,16 @@ from football_agents.constants import GeminiConstants
 from football_agents.specialist_agents.tools import backup_baseline_profiles, restore_baseline_profiles
 
 
+# For Task 3a: Uncomment the following import block when you are ready to define the Remote Captain Agent:
+# from google.adk.agents.remote_a2a_agent import RemoteA2aAgent, AGENT_CARD_WELL_KNOWN_PATH
+
 # TODO: Task 3a - Define the Remote Captain Agent (for Task 3)
-# (Leave this commented out or set to None during Task 1)
-# Hint:
+# (Leave this set to None during Task 1. When doing Task 3, uncomment the code below to define team_captain_remote)
+# CAPTAIN_A2A_URL = os.environ.get("CAPTAIN_A2A_URL", f"http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}")
 # team_captain_remote = RemoteA2aAgent(
 #     name="team_captain",
-#     description="The team captain...",
-#     agent_card=os.environ.get("CAPTAIN_A2A_URL", f"http://localhost:8001{AGENT_CARD_WELL_KNOWN_PATH}")
+#     description="The team captain, reachable over the A2A protocol.",
+#     agent_card=CAPTAIN_A2A_URL,
 # )
 team_captain_remote = None
 
@@ -55,19 +58,18 @@ coach_agent = LlmAgent(
     1. If you receive the exact message 'BACKUP_BASELINE', you MUST immediately call the `backup_baseline_profiles` tool and return its response.
     2. If you receive the exact message 'RESTORE_BASELINE', you MUST immediately call the `restore_baseline_profiles` tool and return its response.
     
-    TACTICAL SHOUTS :
-    # TODO: Task 1 - Write a simple direct response prompt for the Coach
-    # Instruct the coach to respond directly to tactical shouts with a funny,
-    # encouraging quote (e.g. "Alright lads, let's attack!").
-
+    TACTICAL SHOUTS:
+    # TODO: Task 1 - Direct touchline shouts
+    # Copy or uncomment the instruction below to make the Coach respond directly to tactical shouts:
+    # For any other message, respond directly as a passionate coach with a funny, encouraging one sentence shout! Do NOT call any subagents yet.
         
-    # TODO: Task 3b : Rewrite the TACTICAL SHOUT instruction for the Coach to 
-    IMMEDIATELY transfer control to the `team_captain` sub-agent.
-    
+    # TODO: Task 3b - Relay control to the Captain
+    # When you get to Task 3, replace/comment out the Task 1 instruction above with the instruction below:
+    # For any other message, immediately transfer control to the `team_captain` sub-agent. Do NOT attempt to answer the shout yourself!
     """,
     
     tools=[backup_baseline_profiles, restore_baseline_profiles],
-    sub_agents=[], # TODO: Task 3c : Add [team_captain_remote] here 
+    sub_agents=[], # TODO: Task 3c - Register remote captain: when in Task 3, change this to [team_captain_remote] (and make sure to define it in Task 3a)
 )
 
 root_agent = coach_agent
